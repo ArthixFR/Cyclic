@@ -62,7 +62,7 @@ public class TileFan extends TileEntityBase implements ITickableTileEntity, INam
   }
 
   private float getSpeedCalc() {
-    return (this.speed) / 35F;
+    return (this.speed) / 28F;
   }
 
   private int getCurrentRange() {
@@ -92,6 +92,11 @@ public class TileFan extends TileEntityBase implements ITickableTileEntity, INam
       // sometimes is empty on changing dimension or tile load/unload
       return 0;
     }
+
+    if (this.getWorld().getGameTime() % 2 != 0) {
+      return 0;
+    }
+
     BlockPos start = shape.get(0);
     BlockPos end = shape.get(shape.size() - 1); //without this hotfix, fan works only on the flatedge of the band, not the 1x1 area
     switch (getCurrentFacing().getAxis()) {
