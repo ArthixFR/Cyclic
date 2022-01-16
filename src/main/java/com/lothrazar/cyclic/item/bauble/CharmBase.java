@@ -31,8 +31,8 @@ public abstract class CharmBase extends ItemBaseToggle {
   private static final int YLOWEST = -30;
   private static final int YDEST = 255;
   private static final int FIREPROTSECONDS = 10;
-  private static final int FALLDISTANCESECONDS = 30;
-  private static final int FALLDISTANCELIMIT = 10; // was 6 in 1.12.2
+  private static final int FALLDISTANCESECONDS = 5;
+  private static final int FALLDISTANCELIMIT = 5; // was 6 in 1.12.2
   public static final UUID ID_SPEED = UUID.fromString("12230aa2-eff2-4a81-b92b-a1cb95f115c6");
   public static final UUID ID_LUCK = UUID.fromString("acc30aa2-eff2-4a81-b92b-a1cb95f115c6");
   public static final UUID ID_ATTACKSPEED = UUID.fromString("b4678aa2-eff2-4a81-b92b-a1cb95f115c6");
@@ -41,6 +41,7 @@ public abstract class CharmBase extends ItemBaseToggle {
   boolean witherProt;
   boolean voidProt;
   boolean wingCharm;
+  boolean sailboatCharm;
 
   public CharmBase(Properties properties) {
     super(properties);
@@ -49,6 +50,9 @@ public abstract class CharmBase extends ItemBaseToggle {
   @Override
   public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
     if (!this.canUse(stack)) {
+      return;
+    }
+    if (!this.isOn(stack)) {
       return;
     }
     tryVoidTick(stack, worldIn, entityIn);
@@ -64,7 +68,7 @@ public abstract class CharmBase extends ItemBaseToggle {
 
   private void tryWingTick(ItemStack stack, Entity entityIn, LivingEntity living) {
     if (this.wingCharm && living.fallDistance > FALLDISTANCELIMIT && !living.isPotionActive(Effects.SLOW_FALLING)) {
-      EffectInstance eff = new EffectInstance(Effects.SLOW_FALLING, FALLDISTANCESECONDS * Const.TICKS_PER_SEC, Const.Potions.I);
+      EffectInstance eff = new EffectInstance(Effects.SLOW_FALLING, FALLDISTANCESECONDS * Const.TICKS_PER_SEC, Const.Potions.II);
       living.addPotionEffect(eff);
       UtilItemStack.damageItem(living, stack);
       UtilSound.playSound(living, SoundEvents.BLOCK_LADDER_FALL);

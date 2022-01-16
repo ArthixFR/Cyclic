@@ -40,12 +40,17 @@ public class LocationGpsCard extends ItemBase {
     BlockPosDim dim = getPosition(stack);
     if (dim != null) {
       tooltip.add(new TranslationTextComponent(dim.toString()).mergeStyle(TextFormatting.GRAY));
-      if (flagIn.isAdvanced() || Screen.hasShiftDown()) {
+      if (Screen.hasShiftDown()) {
         String side = "S: " + dim.getSide().toString().toUpperCase();
         tooltip.add(new TranslationTextComponent(side).mergeStyle(TextFormatting.GRAY));
-        String sideF = "F: " + dim.getSidePlayerFacing().toString().toUpperCase();
-        tooltip.add(new TranslationTextComponent(sideF).mergeStyle(TextFormatting.GRAY));
-        tooltip.add(new TranslationTextComponent("H: " + dim.getHitVec().toString()).mergeStyle(TextFormatting.GRAY));
+        //        String sideF = "F: " + dim.getSidePlayerFacing().toString().toUpperCase();
+        //        tooltip.add(new TranslationTextComponent(sideF).mergeStyle(TextFormatting.GRAY));
+        if (!dim.getHitVec().equals(Vector3d.ZERO)) {
+          tooltip.add(new TranslationTextComponent("H: " + dim.getHitVec().toString()).mergeStyle(TextFormatting.GRAY));
+        }
+      }
+      else {
+        tooltip.add(new TranslationTextComponent("item.cyclic.shift").mergeStyle(TextFormatting.DARK_GRAY));
       }
     }
     else {
@@ -59,23 +64,24 @@ public class LocationGpsCard extends ItemBase {
   public ActionResultType onItemUse(ItemUseContext context) {
     PlayerEntity player = context.getPlayer();
     Hand hand = context.getHand();
+    player.swingArm(hand);
+    if (player.world.isRemote) {
+      return ActionResultType.PASS;
+    }
     BlockPos pos = context.getPos();
     Direction side = context.getFace();
     ItemStack held = player.getHeldItem(hand);
-    player.swingArm(hand);
     UtilNBT.setItemStackBlockPos(held, pos);
     held.getOrCreateTag().putString(NBT_DIM, UtilWorld.dimensionToString(player.world));
     UtilNBT.setItemStackNBTVal(held, NBT_SIDE, side.ordinal());
     UtilNBT.setItemStackNBTVal(held, NBT_SIDE + "facing", player.getHorizontalFacing().ordinal());
-    UtilChat.sendStatusMessage(player, UtilChat.lang("item.location.saved")
-        + UtilChat.blockPosToString(pos));
+    UtilChat.sendStatusMessage(player, UtilChat.lang("item.location.saved") + UtilChat.blockPosToString(pos));
     // fl
     Vector3d vec = context.getHitVec();
     held.getOrCreateTag().putDouble("hitx", vec.x - pos.getX());
     held.getOrCreateTag().putDouble("hity", vec.y - pos.getY());
     held.getOrCreateTag().putDouble("hitz", vec.z - pos.getZ());
     return ActionResultType.SUCCESS;
-    //this.write 
   }
 
   public static BlockPosDim getPosition(ItemStack item) {

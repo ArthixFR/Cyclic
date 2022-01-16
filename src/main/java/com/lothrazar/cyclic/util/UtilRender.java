@@ -38,8 +38,6 @@ import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.fluids.FluidStack;
@@ -63,7 +61,7 @@ public class UtilRender {
    * @param textureHeight
    * @param zLevel
    */
-  public static void drawTiledSprite(int xPosition, int yPosition, int yOffset, int desiredWidth, int desiredHeight, TextureAtlasSprite sprite, int textureWidth,
+  public static void drawTiledSprite(Matrix4f matrix, int xPosition, int yPosition, int yOffset, int desiredWidth, int desiredHeight, TextureAtlasSprite sprite, int textureWidth,
       int textureHeight, int zLevel) {
     if (desiredWidth == 0 || desiredHeight == 0 || textureWidth == 0 || textureHeight == 0) {
       return;
@@ -103,10 +101,10 @@ public class UtilRender {
         int y = yStart - ((yTile + 1) * textureHeight);
         int maskTop = textureHeight - height;
         float vMaxLocal = vMax - (vDif * maskTop / textureHeight);
-        vertexBuffer.pos(x, y + textureHeight, zLevel).tex(uMin, vMaxLocal).endVertex();
-        vertexBuffer.pos(shiftedX, y + textureHeight, zLevel).tex(uMaxLocal, vMaxLocal).endVertex();
-        vertexBuffer.pos(shiftedX, y + maskTop, zLevel).tex(uMaxLocal, vMin).endVertex();
-        vertexBuffer.pos(x, y + maskTop, zLevel).tex(uMin, vMin).endVertex();
+        vertexBuffer.pos(matrix, x, y + textureHeight, zLevel).tex(uMin, vMaxLocal).endVertex();
+        vertexBuffer.pos(matrix, shiftedX, y + textureHeight, zLevel).tex(uMaxLocal, vMaxLocal).endVertex();
+        vertexBuffer.pos(matrix, shiftedX, y + maskTop, zLevel).tex(uMaxLocal, vMin).endVertex();
+        vertexBuffer.pos(matrix, x, y + maskTop, zLevel).tex(uMin, vMin).endVertex();
       }
     }
     vertexBuffer.finishDrawing();
@@ -250,7 +248,6 @@ public class UtilRender {
    * Render this BLOCK right here in the world, start with alpha and scale near 1. Call from TESR perspective
    * 
    */
-  @OnlyIn(Dist.CLIENT)
   public static void renderAsBlock(final BlockPos centerPos, final List<BlockPos> shape, MatrixStack matrix, BlockState renderBlockState, float alpha, float scale) {
     World world = Minecraft.getInstance().world;
     //render 
@@ -360,7 +357,6 @@ public class UtilRender {
    * @param coords
    * @param alpha
    */
-  @OnlyIn(Dist.CLIENT)
   public static void renderColourCubes(RenderWorldLastEvent evt, Map<BlockPos, Color> coords, float alpha) {
     ClientPlayerEntity player = Minecraft.getInstance().player;
     if (player == null) {

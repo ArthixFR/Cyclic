@@ -12,22 +12,19 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
-public class TileLaser extends TileEntityBase implements ITickableTileEntity, INamedContainerProvider {
+public class TileLaser extends TileEntityBase implements INamedContainerProvider {
 
   static enum Fields {
     REDSTONE, THICK, RED, GREEN, BLUE, ALPHA, XOFF, YOFF, ZOFF;
@@ -84,10 +81,6 @@ public class TileLaser extends TileEntityBase implements ITickableTileEntity, IN
   }
 
   @Override
-  public void tick() {}
-
-  @Override
-  @OnlyIn(Dist.CLIENT)
   public AxisAlignedBB getRenderBoundingBox() {
     return TileEntity.INFINITE_EXTENT_AABB;
   }

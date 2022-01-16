@@ -10,8 +10,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class BlockRedstoneClock extends BlockBase {
 
@@ -52,9 +50,8 @@ public class BlockRedstoneClock extends BlockBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
-    ScreenManager.registerFactory(ContainerScreenRegistry.clock, ScreenClock::new);
+    ScreenManager.registerFactory(ContainerScreenRegistry.CLOCK, ScreenClock::new);
   }
 
   @Override

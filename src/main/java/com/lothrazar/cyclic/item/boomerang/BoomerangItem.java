@@ -1,6 +1,7 @@
 package com.lothrazar.cyclic.item.boomerang;
 
 import com.lothrazar.cyclic.base.ItemBase;
+import com.lothrazar.cyclic.util.UtilItemStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BowItem;
@@ -69,10 +70,8 @@ public class BoomerangItem extends ItemBase {
         e = new BoomerangEntityStun(world, player);
       break;
     }
-    shootMe(world, player, e);
-    stack.damageItem(1, player, (p) -> {
-      p.sendBreakAnimation(Hand.MAIN_HAND);
-    });
+    shootMe(world, player, e, 0, percentageCharged * ItemBase.VELOCITY_MAX);
+    UtilItemStack.damageItem(player, stack);
     player.setHeldItem(player.getActiveHand(), ItemStack.EMPTY);
     e.setBoomerangThrown(stack.copy());
     e.setOwner(player);

@@ -28,7 +28,7 @@ public class CraftingStickContainer extends ContainerBase implements IContainerC
 
   //does NOT save inventory into the stack, very simple and plain
   public CraftingStickContainer(int id, PlayerInventory playerInventory, PlayerEntity player, Hand hand) {
-    super(ContainerScreenRegistry.crafting_stick, id);
+    super(ContainerScreenRegistry.CRAFTING_STICK, id);
     this.hand = hand;
     this.playerEntity = player;
     this.playerInventory = playerInventory;
@@ -51,7 +51,6 @@ public class CraftingStickContainer extends ContainerBase implements IContainerC
 
   @Override
   public void onCraftMatrixChanged(IInventory inventory) {
-    // 
     World world = playerInventory.player.world;
     if (!world.isRemote) {
       ServerPlayerEntity player = (ServerPlayerEntity) playerInventory.player;

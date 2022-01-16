@@ -7,12 +7,16 @@ import com.lothrazar.cyclic.block.scaffolding.ItemScaffolding;
 import com.lothrazar.cyclic.data.DataTags;
 import com.lothrazar.cyclic.enchant.EnchantMultishot;
 import com.lothrazar.cyclic.item.AntimatterEvaporatorWandItem;
+import com.lothrazar.cyclic.item.SleepingMatItem;
+import com.lothrazar.cyclic.item.apple.LoftyStatureApple;
 import com.lothrazar.cyclic.item.bauble.CharmBase;
+import com.lothrazar.cyclic.item.bauble.SoulstoneCharm;
 import com.lothrazar.cyclic.item.builder.BuilderActionType;
 import com.lothrazar.cyclic.item.builder.BuilderItem;
 import com.lothrazar.cyclic.item.carrot.ItemHorseEnder;
 import com.lothrazar.cyclic.item.datacard.ShapeCard;
 import com.lothrazar.cyclic.item.enderbook.EnderBookItem;
+import com.lothrazar.cyclic.item.equipment.GlowingHelmetItem;
 import com.lothrazar.cyclic.item.heart.HeartItem;
 import com.lothrazar.cyclic.item.storagebag.ItemStorageBag;
 import com.lothrazar.cyclic.registry.BlockRegistry;
@@ -53,6 +57,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
@@ -103,13 +108,13 @@ public class ItemEvents {
   @SubscribeEvent
   public void onArrowLooseEvent(ArrowLooseEvent event) {
     ItemStack stackBow = event.getBow();
-    int level = EnchantRegistry.MULTIBOW.getCurrentLevelTool(stackBow);
-    if (level <= 0) {
-      return;
-    }
     PlayerEntity player = event.getPlayer();
     World worldIn = player.world;
     if (worldIn.isRemote == false) {
+      int level = EnchantRegistry.MULTIBOW.getCurrentLevelTool(stackBow);
+      if (level <= 0) {
+        return;
+      }
       //use cross product to push arrows out to left and right
       Vector3d playerDirection = UtilEntity.lookVector(player.rotationYaw, player.rotationPitch);
       Vector3d left = playerDirection.crossProduct(new Vector3d(0, 1, 0));
@@ -265,6 +270,19 @@ public class ItemEvents {
   }
 
   @SubscribeEvent
+  public void onPlayerDeath(LivingDeathEvent event) {
+    //
+    if (event.getEntityLiving() instanceof PlayerEntity) {
+      PlayerEntity player = (PlayerEntity) event.getEntityLiving();
+      //      Items.TOTEM_OF_UNDYING
+      ItemStack charmStack = CharmUtil.getIfEnabled(player, ItemRegistry.SOULSTONE.get());
+      if (SoulstoneCharm.checkTotemDeathProtection(event.getSource(), player, charmStack)) {
+        event.setCanceled(true);
+      }
+    }
+  }
+
+  @SubscribeEvent
   public void onPlayerCloneDeath(PlayerEvent.Clone event) {
     ModifiableAttributeInstance original = event.getOriginal().getAttribute(Attributes.MAX_HEALTH);
     if (original != null) {
@@ -285,6 +303,9 @@ public class ItemEvents {
       CharmBase.charmLuck(player);
       CharmBase.charmAttackSpeed(player);
       CharmBase.charmExpSpeed(player);
+      //step
+      LoftyStatureApple.onUpdate(player);
+      GlowingHelmetItem.onEntityUpdate(event);
     }
   }
 
@@ -338,13 +359,13 @@ public class ItemEvents {
     BlockPos pos = event.getPos();
     if (world.getBlockState(pos).getBlock() == Blocks.PODZOL
         && world.isAirBlock(pos.up())) {
-      world.setBlockState(pos.up(), BlockRegistry.flower_cyan.getDefaultState());
+      world.setBlockState(pos.up(), BlockRegistry.FLOWER_CYAN.get().getDefaultState());
       event.setResult(Result.ALLOW);
     }
-    else if (world.getBlockState(pos).getBlock() == BlockRegistry.flower_cyan) {
+    else if (world.getBlockState(pos).getBlock() == BlockRegistry.FLOWER_CYAN.get()) {
       event.setResult(Result.ALLOW);
       if (world.rand.nextDouble() < 0.5) {
-        UtilItemStack.drop(world, pos, new ItemStack(BlockRegistry.flower_cyan));
+        UtilItemStack.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_CYAN.get()));
       }
     }
   }
@@ -353,7 +374,7 @@ public class ItemEvents {
   public void onBedCheck(SleepingLocationCheckEvent event) {
     if (event.getEntity() instanceof PlayerEntity) {
       PlayerEntity p = (PlayerEntity) event.getEntity();
-      if (p.getPersistentData().getBoolean("cyclic_sleeping")) { // TODO: const in sleeping mat
+      if (p.getPersistentData().getBoolean(SleepingMatItem.CYCLIC_SLEEPING)) {
         event.setResult(Result.ALLOW);
       }
     }
@@ -374,6 +395,7 @@ public class ItemEvents {
         //test? maybe config disable? 
         event.getPlayer().swingArm(event.getHand());
         event.getWorld().destroyBlock(event.getPos(), true);
+        event.setCanceled(true);
       }
     }
   }

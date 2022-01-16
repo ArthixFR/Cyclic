@@ -25,6 +25,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -107,12 +108,11 @@ public class EnderBookItem extends ItemBase {
           if (loc.getDimension().equalsIgnoreCase(UtilWorld.dimensionToString(worldIn))) {
             UtilEntity.enderTeleportEvent(p, worldIn, loc.getPos());
           }
-          else {
-            //diff dim 
-            UtilEntity.dimensionTeleport(p, worldIn, loc);
+          else if (!worldIn.isRemote) {
+            UtilEntity.dimensionTeleport((ServerPlayerEntity) p, (ServerWorld) worldIn, loc);
           }
           // done
-          UtilItemStack.damageItem(stack);
+          UtilItemStack.damageItem(p, stack);
           return;
         }
       }

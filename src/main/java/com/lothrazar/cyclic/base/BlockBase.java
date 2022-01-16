@@ -38,7 +38,7 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
-public abstract class BlockBase extends Block {
+public class BlockBase extends Block {
 
   public static final BooleanProperty LIT = BooleanProperty.create("lit");
   private boolean hasGui = false;
@@ -46,7 +46,7 @@ public abstract class BlockBase extends Block {
 
   public BlockBase(Properties properties) {
     super(properties);
-    BlockRegistry.blocks.add(this);
+    BlockRegistry.blocksClientRegistry.add(this);
   }
 
   protected BlockBase setHasGui() {
@@ -154,15 +154,12 @@ public abstract class BlockBase extends Block {
   @Override
   @OnlyIn(Dist.CLIENT)
   public void addInformation(ItemStack stack, IBlockReader worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-    TranslationTextComponent t = new TranslationTextComponent(getTranslationKey() + ".tooltip");
-    t.mergeStyle(TextFormatting.GRAY);
-    tooltip.add(t);
+    tooltip.add(new TranslationTextComponent(getTranslationKey() + ".tooltip").mergeStyle(TextFormatting.GRAY));
   }
 
   /**
    * Override per block for render-ers/screens/etc
    */
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {}
 
   public static boolean isItem(BlockState stateIn, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {

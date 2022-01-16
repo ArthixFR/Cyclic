@@ -15,8 +15,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 public class BlockForester extends BlockBase {
@@ -27,10 +25,9 @@ public class BlockForester extends BlockBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
-    ClientRegistry.bindTileEntityRenderer(TileRegistry.forester, RenderForester::new);
-    ScreenManager.registerFactory(ContainerScreenRegistry.forester, ScreenForester::new);
+    ClientRegistry.bindTileEntityRenderer(TileRegistry.FORESTER, RenderForester::new);
+    ScreenManager.registerFactory(ContainerScreenRegistry.FORESTER, ScreenForester::new);
   }
 
   @Override

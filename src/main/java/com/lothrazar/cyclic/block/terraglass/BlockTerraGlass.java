@@ -23,6 +23,23 @@ public class BlockTerraGlass extends BlockBase {
   }
 
   @Override
+  @OnlyIn(Dist.CLIENT)
+  public float getAmbientOcclusionLightValue(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    return 1.0F;
+  }
+
+  @Override
+  public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
+    return true;
+  }
+
+  @Override
+  @Deprecated
+  public int getOpacity(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    return 0;
+  }
+
+  @Override
   public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side) {
     return blockState.get(LIT) ? 15 : 0;
   }
@@ -33,12 +50,6 @@ public class BlockTerraGlass extends BlockBase {
   }
 
   @Override
-  public float getAmbientOcclusionLightValue(BlockState state, IBlockReader worldIn, BlockPos pos) {
-    return 1.0f;
-  }
-
-  @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
     RenderTypeLookup.setRenderLayer(this, RenderType.getTranslucent());
   }

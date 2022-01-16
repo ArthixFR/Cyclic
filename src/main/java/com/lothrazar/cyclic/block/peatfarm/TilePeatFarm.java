@@ -173,7 +173,7 @@ public class TilePeatFarm extends TileEntityBase implements ITickableTileEntity,
   }
 
   public TilePeatFarm() {
-    super(TileRegistry.peat_farm);
+    super(TileRegistry.PEAT_FARM);
     tank = new FluidTankBase(this, CAPACITY, isFluidValid());
   }
 
@@ -196,6 +196,12 @@ public class TilePeatFarm extends TileEntityBase implements ITickableTileEntity,
     return outer;
   }
 
+  @Override
+  public void setFluid(FluidStack fluid) {
+    tank.setFluid(fluid);
+  }
+
+  @Override
   public FluidStack getFluid() {
     return tank == null ? FluidStack.EMPTY : tank.getFluid();
   }

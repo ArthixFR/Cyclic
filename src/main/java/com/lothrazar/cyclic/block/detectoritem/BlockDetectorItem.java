@@ -16,8 +16,6 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 public class BlockDetectorItem extends BlockBase {
@@ -42,11 +40,10 @@ public class BlockDetectorItem extends BlockBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
     RenderTypeLookup.setRenderLayer(this, RenderType.getCutoutMipped());
-    ClientRegistry.bindTileEntityRenderer(TileRegistry.detector_item, RenderDetectorItem::new);
-    ScreenManager.registerFactory(ContainerScreenRegistry.detector_item, ScreenDetectorItem::new);
+    ClientRegistry.bindTileEntityRenderer(TileRegistry.DETECTOR_ITEM, RenderDetectorItem::new);
+    ScreenManager.registerFactory(ContainerScreenRegistry.DETECTOR_ITEM, ScreenDetectorItem::new);
   }
 
   @Override

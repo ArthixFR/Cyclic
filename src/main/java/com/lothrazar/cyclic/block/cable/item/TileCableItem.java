@@ -6,11 +6,8 @@ import com.lothrazar.cyclic.block.cable.CableBase;
 import com.lothrazar.cyclic.block.cable.EnumConnectType;
 import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import java.util.Collections;
-import java.util.List;
+import com.lothrazar.cyclic.util.UtilDirection;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -18,6 +15,7 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.state.EnumProperty;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.text.ITextComponent;
@@ -32,7 +30,7 @@ import net.minecraftforge.items.ItemStackHandler;
 public class TileCableItem extends TileEntityBase implements ITickableTileEntity, INamedContainerProvider {
 
   private static final int FLOW_QTY = 64; // fixed, for non-extract motion
-  private int extractQty = 64; // default
+  private int extractQty = FLOW_QTY; // default
   ItemStackHandler filter = new ItemStackHandler(1) {
 
     @Override
@@ -53,16 +51,13 @@ public class TileCableItem extends TileEntityBase implements ITickableTileEntity
     return new ItemStackHandler(1);
   }
 
-  List<Integer> rawList = IntStream.rangeClosed(
-      0,
-      5).boxed().collect(Collectors.toList());
-
   @Override
   public void tick() {
-    for (Direction extractSide : Direction.values()) {
-      EnumConnectType connection = this.getBlockState().get(CableBase.FACING_TO_PROPERTY_MAP.get(extractSide));
+    for (final Direction extractSide : Direction.values()) {
+      final EnumProperty<EnumConnectType> extractFace = CableBase.FACING_TO_PROPERTY_MAP.get(extractSide);
+      final EnumConnectType connection = this.getBlockState().get(extractFace);
       if (connection.isExtraction()) {
-        IItemHandler sideHandler = flow.get(extractSide).orElse(null);
+        final IItemHandler sideHandler = flow.get(extractSide).orElse(null);
         tryExtract(sideHandler, extractSide, extractQty, filter);
       }
     }
@@ -70,27 +65,25 @@ public class TileCableItem extends TileEntityBase implements ITickableTileEntity
   }
 
   private void normalFlow() {
-    IItemHandler sideHandler;
-    Direction outgoingSide;
-    for (Direction incomingSide : Direction.values()) {
-      sideHandler = flow.get(incomingSide).orElse(null);
-      //thise items came from that
-      Collections.shuffle(rawList);
-      boolean validAdjacent = false;
-      for (Integer i : rawList) {
-        outgoingSide = Direction.values()[i];
+    // Label for loop for shortcutting, used to continue after items have been moved
+    incomingSideLoop: for (final Direction incomingSide : Direction.values()) {
+      //in all cases sideHandler is required
+      final IItemHandler sideHandler = flow.get(incomingSide).orElse(null);
+      for (final Direction outgoingSide : UtilDirection.getAllInDifferentOrder()) {
         if (outgoingSide == incomingSide) {
           continue;
         }
-        EnumConnectType connection = this.getBlockState().get(CableBase.FACING_TO_PROPERTY_MAP.get(outgoingSide));
-        if (connection.isExtraction() || connection.isBlocked()) {
+        final EnumProperty<EnumConnectType> outgoingFace = CableBase.FACING_TO_PROPERTY_MAP.get(outgoingSide);
+        final EnumConnectType outgoingConnection = this.getBlockState().get(outgoingFace);
+        if (outgoingConnection.isExtraction() || outgoingConnection.isBlocked()) {
           continue;
         }
-        validAdjacent = validAdjacent || this.moveItems(outgoingSide, 64, sideHandler);
+        if (this.moveItems(outgoingSide, FLOW_QTY, sideHandler)) {
+          continue incomingSideLoop; //if items have been moved then change side
+        }
       }
-      if (!validAdjacent) {
-        this.moveItems(incomingSide, FLOW_QTY, sideHandler);
-      }
+      //if no items have been moved then move items in from adjacent
+      this.moveItems(incomingSide, FLOW_QTY, sideHandler);
     }
   }
 

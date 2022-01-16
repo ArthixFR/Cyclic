@@ -29,17 +29,18 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 
 public class AutoTorchItem extends ItemBaseToggle {
+
+  public static IntValue LIGHT_LEVEL;
 
   public AutoTorchItem(Properties properties) {
     super(properties);
   }
-
-  //TODO: config
-  public static final int LIGHT_LIMIT = 9;
 
   @Override
   public void inventoryTick(ItemStack stack, World world, Entity entityIn, int itemSlot, boolean isSelected) {
@@ -58,10 +59,11 @@ public class AutoTorchItem extends ItemBaseToggle {
       return;
     }
     BlockPos pos = entityIn.getPosition();
-    if (world.getLight(pos) <= LIGHT_LIMIT
+    // 
+    if (world.getLight(pos) <= LIGHT_LEVEL.get()
         //            && player.isSpectator() == false
-        //            && world.isSideSolid(pos.down(), Direction.UP)
-        && world.getBlockState(pos.down()).isSolid()
+        && world.getBlockState(pos.down()).isSolidSide(world, pos, Direction.UP)
+        //        && world.getBlockState(pos.down()).isSolid()
         && world.isAirBlock(pos)) { // dont overwrite liquids
       if (UtilPlaceBlocks.placeStateSafe(world, player, pos, Blocks.TORCH.getDefaultState())) {
         UtilItemStack.damageItem(player, stack);

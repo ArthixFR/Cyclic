@@ -3,13 +3,10 @@ package com.lothrazar.cyclic.block.tankcask;
 import com.lothrazar.cyclic.base.FluidTankBase;
 import com.lothrazar.cyclic.base.TileEntityBase;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import java.util.Collections;
+import com.lothrazar.cyclic.util.UtilDirection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
@@ -26,7 +23,6 @@ public class TileCask extends TileEntityBase implements ITickableTileEntity {
   public static final int CAPACITY = 8 * FluidAttributes.BUCKET_VOLUME;
   public static final int TRANSFER_FLUID_PER_TICK = CAPACITY / 2;
   public FluidTankBase tank;
-  private int flowing = 0;
 
   static enum Fields {
     FLOWING, N, E, S, W, U, D;
@@ -34,6 +30,7 @@ public class TileCask extends TileEntityBase implements ITickableTileEntity {
 
   public TileCask() {
     super(TileRegistry.cask);
+    flowing = 0;
     tank = new FluidTankBase(this, CAPACITY, isFluidValid());
     poweredSides = new HashMap<Direction, Boolean>();
     for (Direction f : Direction.values()) {
@@ -148,16 +145,10 @@ public class TileCask extends TileEntityBase implements ITickableTileEntity {
     }
   }
 
-  private List<Integer> rawList = IntStream.rangeClosed(
-      0,
-      5).boxed().collect(Collectors.toList());
-
   private void tickCableFlow() {
-    Collections.shuffle(rawList);
-    for (Integer i : rawList) {
-      Direction exportToSide = Direction.values()[i];
+    for (final Direction exportToSide : UtilDirection.getAllInDifferentOrder()) {
       if (this.poweredSides.get(exportToSide)) {
-        this.moveFluids(exportToSide, TRANSFER_FLUID_PER_TICK / 4, tank);
+        this.moveFluids(exportToSide, pos.offset(exportToSide), TRANSFER_FLUID_PER_TICK / 4, tank);
       }
     }
   }

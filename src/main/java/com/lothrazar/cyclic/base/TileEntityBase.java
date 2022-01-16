@@ -7,6 +7,7 @@ import com.lothrazar.cyclic.capability.CustomEnergyStorage;
 import com.lothrazar.cyclic.item.datacard.filter.FilterCardItem;
 import com.lothrazar.cyclic.net.PacketEnergySync;
 import com.lothrazar.cyclic.registry.PacketRegistry;
+import com.lothrazar.cyclic.util.UtilDirection;
 import com.lothrazar.cyclic.util.UtilEntity;
 import com.lothrazar.cyclic.util.UtilFakePlayer;
 import com.lothrazar.cyclic.util.UtilFluid;
@@ -20,6 +21,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.play.client.CPlayerDiggingPacket.Action;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
@@ -42,6 +44,7 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 public abstract class TileEntityBase extends TileEntity implements IInventory {
@@ -50,9 +53,10 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
   public static final String NBTFLUID = "fluid";
   public static final String NBTENERGY = "energy";
   public static final int MENERGY = 64 * 1000;
+  protected int flowing = 1;
   protected int needsRedstone = 1;
   protected int render = 0; // default to do not render
-  protected int timer;
+  protected int timer = 0;
 
   public TileEntityBase(TileEntityType<?> tileEntityTypeIn) {
     super(tileEntityTypeIn);
@@ -130,6 +134,23 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
         fp.get().setHeldItem(hand, maybeTool);
       }
     });
+  }
+
+  public static ActionResultType leftClickBlock(final WeakReference<FakePlayer> fakePlayerWeakReference,
+                                                final BlockPos targetPos, final Direction facing) {
+    final FakePlayer fakePlayer = fakePlayerWeakReference.get();
+    if (fakePlayer == null) {
+      return ActionResultType.FAIL;
+    }
+    final Direction placementOn = (facing == null) ? fakePlayer.getAdjustedHorizontalFacing() : facing;
+    final BlockRayTraceResult blockRayTraceResult = new BlockRayTraceResult(fakePlayer.getLookVec(), placementOn, targetPos, true);
+    try {
+      fakePlayer.interactionManager.func_225416_a(blockRayTraceResult.getPos(), Action.START_DESTROY_BLOCK, facing, 0);
+      return ActionResultType.SUCCESS;
+    }
+    catch (Exception e) {
+      return ActionResultType.FAIL;
+    }
   }
 
   public static ActionResultType rightClickBlock(WeakReference<FakePlayer> fakePlayer,
@@ -227,50 +248,73 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
     return this.getWorld().isBlockPowered(this.getPos());
   }
 
+  public int getRedstonePower() {
+    return this.getWorld().getRedstonePowerFromNeighbors(this.getPos());
+  }
+
   public boolean requiresRedstone() {
     return this.needsRedstone == 1;
   }
 
-  public void moveFluids(Direction myFacingDir, int toFlow, IFluidHandler tank) {
-    Direction themFacingMe = myFacingDir.getOpposite();
-    if (tank == null || tank.getFluidInTank(0).getAmount() <= 0) {
+  public void moveFluids(Direction myFacingDir, BlockPos posTarget, int toFlow, IFluidHandler tank) {
+    if (tank == null || tank.getFluidInTank(0).isEmpty()) {
       return;
     }
-    BlockPos posTarget = pos.offset(myFacingDir);
+    final Direction themFacingMe = myFacingDir.getOpposite();
     UtilFluid.tryFillPositionFromTank(world, posTarget, themFacingMe, tank, toFlow);
   }
 
   public void tryExtract(IItemHandler myself, Direction extractSide, int qty, ItemStackHandler nullableFilter) {
+    if (qty <= 0) {
+      return;
+    }
+    final ItemStack stackInSlot = myself.getStackInSlot(0);
+    if (!stackInSlot.isEmpty()) {
+      return;
+    }
     if (extractSide == null) {
       return;
     }
-    if (extractSide == null || !myself.getStackInSlot(0).isEmpty()) {
+    final BlockPos posTarget = pos.offset(extractSide);
+    final TileEntity tile = world.getTileEntity(posTarget);
+    if (tile == null) {
       return;
     }
-    BlockPos posTarget = pos.offset(extractSide);
-    TileEntity tile = world.getTileEntity(posTarget);
-    if (tile != null) {
-      IItemHandler itemHandlerFrom = tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, extractSide.getOpposite()).orElse(null);
-      //
-      ItemStack itemTarget;
-      if (itemHandlerFrom != null) {
-        //ok go
-        for (int i = 0; i < itemHandlerFrom.getSlots(); i++) {
-          itemTarget = itemHandlerFrom.extractItem(i, qty, true);
-          if (itemTarget.isEmpty()) {
-            continue;
-          }
-          // and then pull 
-          if (nullableFilter != null &&
-              !FilterCardItem.filterAllowsExtract(nullableFilter.getStackInSlot(0), itemTarget)) {
-            continue;
-          }
-          itemTarget = itemHandlerFrom.extractItem(i, qty, false);
-          ItemStack result = myself.insertItem(0, itemTarget.copy(), false);
-          itemTarget.setCount(result.getCount());
-          return;
+    final IItemHandler itemHandlerFrom = tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, extractSide.getOpposite()).orElse(null);
+    if (itemHandlerFrom == null) {
+      return;
+    }
+    final int slotLimit = Math.min(myself.getSlotLimit(0), qty);
+    for (int slot = 0; slot < itemHandlerFrom.getSlots(); slot++) {
+      final ItemStack itemStackToExtract = itemHandlerFrom.getStackInSlot(slot);
+      if (itemStackToExtract.isEmpty()) {
+        continue;
+      }
+      if (nullableFilter != null &&
+          !FilterCardItem.filterAllowsExtract(nullableFilter.getStackInSlot(0), itemStackToExtract)) {
+        continue;
+      }
+      //find the theoretical maximum we can extract
+      int limit = Math.min(itemStackToExtract.getCount(), itemStackToExtract.getMaxStackSize());
+      limit = Math.min(limit, slotLimit);
+      //check there is anything to extract
+      if (limit <= 0) {
+        continue;
+      }
+      final ItemStack extractedItemStack = itemHandlerFrom.extractItem(slot, limit, false);
+      if (extractedItemStack.isEmpty()) {
+        continue;
+      }
+      ItemStack remainderItemStack = myself.insertItem(0, extractedItemStack, false);
+      //sanity check
+      if (!remainderItemStack.isEmpty()) {
+        ModCyclic.LOGGER.error("Incorrect number of items extracted, have to re-insert " + remainderItemStack);
+        remainderItemStack = itemHandlerFrom.insertItem(slot, remainderItemStack, false);
+        if (!remainderItemStack.isEmpty()) {
+          ModCyclic.LOGGER.error("Incorrect number of items extracted and now unable to re-insert, " + remainderItemStack + " have been lost");
         }
       }
+      return;
     }
   }
 
@@ -279,86 +323,137 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
   }
 
   public boolean moveItems(Direction myFacingDir, BlockPos posTarget, int max, IItemHandler handlerHere, int theslot) {
+    if (max <= 0) {
+      return false;
+    }
     if (this.world.isRemote()) {
       return false;
     }
     if (handlerHere == null) {
       return false;
     }
-    Direction themFacingMe = myFacingDir.getOpposite();
-    TileEntity tileTarget = world.getTileEntity(posTarget);
+    //first get the original ItemStack as creating new ones is expensive
+    final ItemStack originalItemStack = handlerHere.getStackInSlot(theslot);
+    if (originalItemStack.isEmpty()) {
+      return false;
+    }
+    final Direction themFacingMe = myFacingDir.getOpposite();
+    final TileEntity tileTarget = world.getTileEntity(posTarget);
     if (tileTarget == null) {
       return false;
     }
-    IItemHandler handlerOutput = tileTarget.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, themFacingMe).orElse(null);
+    final IItemHandler handlerOutput = tileTarget
+        .getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, themFacingMe)
+        .orElse(null);
     if (handlerOutput == null) {
       return false;
     }
-    if (handlerHere != null && handlerOutput != null) {
-      //first simulate 
-      ItemStack drain = handlerHere.extractItem(theslot, max, true); // handlerHere.getStackInSlot(theslot).copy();
-      int sizeStarted = drain.getCount();
-      if (!drain.isEmpty()) {
-        //now push it into output, but find out what was ACTUALLY taken
-        for (int slot = 0; slot < handlerOutput.getSlots(); slot++) {
-          drain = handlerOutput.insertItem(slot, drain, false);
-          if (drain.isEmpty()) {
-            break; //done draining
-          }
+    final int maxStackSize = originalItemStack.getMaxStackSize();
+    final int originalCount = originalItemStack.getCount();
+    int remainingItemCount = originalCount;
+    ItemStack itemStackToInsert = null;
+    //attempt to push into output
+    for (int slot = 0; slot < handlerOutput.getSlots(); slot++) {
+      //find the theoretical maximum we can insert
+      int limit = Math.min(handlerOutput.getSlotLimit(slot), maxStackSize);
+      int amountInOutputSlot = 0;
+      //reduce limit by amount already in the output slot
+      final ItemStack stackInOutputSlot = handlerOutput.getStackInSlot(slot);
+      if (!stackInOutputSlot.isEmpty()) {
+        //if the output slot is not compatible then skip this slot
+        if (!ItemHandlerHelper.canItemStacksStack(originalItemStack, stackInOutputSlot)) {
+          continue;
         }
+        amountInOutputSlot = stackInOutputSlot.getCount();
+        limit -= amountInOutputSlot;
       }
-      int sizeAfter = sizeStarted - drain.getCount();
-      if (sizeAfter > 0) {
-        handlerHere.extractItem(theslot, sizeAfter, false);
+      limit = Math.min(limit, remainingItemCount);
+      limit = Math.min(limit, max);
+      //skip this output slot if we cannot insert more
+      if (limit <= 0) {
+        continue;
       }
-      return sizeAfter > 0;
+      //lazily create an ItemStack for inserting and re-use it for future inserts
+      if (itemStackToInsert == null) {
+        itemStackToInsert = originalItemStack.copy();
+      }
+      itemStackToInsert.setCount(limit);
+      //only perform an insert (even simulated) if required as it creates at least one new ItemStack in the process
+      final ItemStack remainderItemStack = handlerOutput.insertItem(slot, itemStackToInsert, false);
+      //check the remainder to calculate how much was actually inserted
+      remainingItemCount -= (limit - remainderItemStack.getCount());
+      if (remainingItemCount <= 0) {
+        break;
+      }
     }
-    return false;
+    final int insertedItemCount = originalCount - remainingItemCount;
+    final boolean didInsertItems = insertedItemCount > 0;
+    if (didInsertItems) {
+      //only perform an extraction if required as it creates a new ItemStack in the process
+      final ItemStack extractedItemStack = handlerHere.extractItem(theslot, insertedItemCount, false);
+      //sanity check
+      if (extractedItemStack.getCount() != insertedItemCount) {
+        ModCyclic.LOGGER.error("Imbalance moving items, extracted " + extractedItemStack + " inserted " + insertedItemCount);
+      }
+    }
+    return didInsertItems;
   }
 
   protected boolean moveEnergy(Direction myFacingDir, int quantity) {
     return moveEnergy(myFacingDir, pos.offset(myFacingDir), quantity);
   }
 
-  protected boolean moveEnergy(Direction myFacingDir, BlockPos posTarget, int quantity) {
-    if (this.world.isRemote) {
-      return false; //important to not desync cables
-    }
-    IEnergyStorage handlerHere = this.getCapability(CapabilityEnergy.ENERGY, myFacingDir).orElse(null);
-    if (handlerHere == null || handlerHere.getEnergyStored() == 0) {
+  protected boolean moveEnergy(final Direction myFacingDir, final BlockPos posTarget, final int quantity) {
+    if (quantity <= 0) {
       return false;
     }
-    Direction themFacingMe = myFacingDir.getOpposite();
-    TileEntity tileTarget = world.getTileEntity(posTarget);
+    if (this.world.isRemote) {
+      return false; //important to not desync cables 
+    }
+    final IEnergyStorage handlerHere = this.getCapability(CapabilityEnergy.ENERGY, myFacingDir).orElse(null);
+    if (handlerHere == null) {
+      return false;
+    }
+    final Direction themFacingMe = myFacingDir.getOpposite();
+    final TileEntity tileTarget = world.getTileEntity(posTarget);
     if (tileTarget == null) {
       return false;
     }
-    IEnergyStorage handlerOutput = tileTarget.getCapability(CapabilityEnergy.ENERGY, themFacingMe).orElse(null);
+    final IEnergyStorage handlerOutput = tileTarget.getCapability(CapabilityEnergy.ENERGY, themFacingMe).orElse(null);
     if (handlerOutput == null) {
       return false;
     }
-    if (handlerHere != null && handlerOutput != null
-        && handlerHere.canExtract() && handlerOutput.canReceive()) {
-      //first simulate
-      int drain = handlerHere.extractEnergy(quantity, true);
-      if (drain > 0) {
-        //now push it into output, but find out what was ACTUALLY taken
-        int filled = handlerOutput.receiveEnergy(drain, false);
-        //now actually drain that much from here
-        handlerHere.extractEnergy(filled, false);
-        if (filled > 0 && tileTarget instanceof TileCableEnergy) {
-          // not so compatible with other fluid systems. itl do i guess
-          TileCableEnergy cable = (TileCableEnergy) tileTarget;
-          cable.updateIncomingEnergyFace(themFacingMe);
-        }
-        return filled > 0;
-      }
+    final int capacity = handlerOutput.getMaxEnergyStored() - handlerOutput.getEnergyStored();
+    if (capacity <= 0) {
+      return false;
     }
-    return false;
+    //first simulate
+    final int drain = handlerHere.extractEnergy(Math.min(quantity, capacity), true);
+    if (drain <= 0) {
+      return false;
+    }
+    //now push it into output, but find out what was ACTUALLY taken
+    final int filled = handlerOutput.receiveEnergy(drain, false);
+    if (filled <= 0) {
+      return false;
+    }
+    //now actually drain that much from here
+    final int drained = handlerHere.extractEnergy(filled, false);
+    //sanity check
+    if (drained != filled) {
+      ModCyclic.LOGGER.error("Imbalance moving energy, extracted " + drained + " received " + filled);
+    }
+    if (tileTarget instanceof TileCableEnergy) {
+      // not so compatible with other fluid systems. it will do i guess
+      TileCableEnergy cable = (TileCableEnergy) tileTarget;
+      cable.updateIncomingEnergyFace(themFacingMe);
+    }
+    return true;
   }
 
   @Override
   public void read(BlockState bs, CompoundNBT tag) {
+    flowing = tag.getInt("flowing");
     needsRedstone = tag.getInt("needsRedstone");
     render = tag.getInt("renderParticles");
     timer = tag.getInt("timer");
@@ -367,6 +462,7 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
 
   @Override
   public CompoundNBT write(CompoundNBT tag) {
+    tag.putInt("flowing", flowing);
     tag.putInt("needsRedstone", needsRedstone);
     tag.putInt("renderParticles", render);
     tag.putInt("timer", timer);
@@ -379,6 +475,10 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
 
   public void setNeedsRedstone(int value) {
     this.needsRedstone = value % 2;
+  }
+
+  public FluidStack getFluid() {
+    return FluidStack.EMPTY;
   }
 
   public void setFluid(FluidStack fluid) {}
@@ -442,19 +542,29 @@ public abstract class TileEntityBase extends TileEntity implements IInventory {
   }
 
   public void setEnergy(int value) {
-    IEnergyStorage energ = this.getCapability(CapabilityEnergy.ENERGY).orElse(null);
-    if (energ != null && energ instanceof CustomEnergyStorage) {
-      ((CustomEnergyStorage) energ).setEnergy(value);
+    IEnergyStorage energy = this.getCapability(CapabilityEnergy.ENERGY).orElse(null);
+    if (energy != null && energy instanceof CustomEnergyStorage) {
+      ((CustomEnergyStorage) energy).setEnergy(value);
     }
   }
 
   //fluid tanks have 'onchanged', energy caps do not
   protected void syncEnergy() {
-    if (world.isRemote == false && world.getGameTime() % 20 == 0) { //if serverside then 
-      IEnergyStorage energ = this.getCapability(CapabilityEnergy.ENERGY).orElse(null);
-      if (energ != null) {
-        PacketRegistry.sendToAllClients(this.getWorld(), new PacketEnergySync(this.getPos(), energ.getEnergyStored()));
-      }
+    //skip if clientside
+    if (world.isRemote || world.getGameTime() % 20 != 0) {
+      return;
+    }
+    final IEnergyStorage energy = this.getCapability(CapabilityEnergy.ENERGY).orElse(null);
+    if (energy == null) {
+      return;
+    }
+    final PacketEnergySync packetEnergySync = new PacketEnergySync(this.getPos(), energy.getEnergyStored());
+    PacketRegistry.sendToAllClients(world, packetEnergySync);
+  }
+
+  public void exportEnergyAllSides() {
+    for (final Direction exportToSide : UtilDirection.getAllInDifferentOrder()) {
+      moveEnergy(exportToSide, MENERGY / 2);
     }
   }
 }

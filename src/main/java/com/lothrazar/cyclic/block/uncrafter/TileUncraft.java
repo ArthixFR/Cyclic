@@ -1,6 +1,5 @@
 package com.lothrazar.cyclic.block.uncrafter;
 
-import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.base.TileEntityBase;
 import com.lothrazar.cyclic.capability.CustomEnergyStorage;
 import com.lothrazar.cyclic.capability.ItemStackHandlerWrapper;
@@ -49,8 +48,22 @@ public class TileUncraft extends TileEntityBase implements ITickableTileEntity, 
   public static ConfigValue<List<? extends String>> IGNORELIST;
   public static ConfigValue<List<? extends String>> IGNORELIST_RECIPES;
   CustomEnergyStorage energy = new CustomEnergyStorage(MAX, MAX);
-  ItemStackHandler inputSlots = new ItemStackHandler(1);
-  ItemStackHandler outputSlots = new ItemStackHandler(8 * 2);
+  ItemStackHandler inputSlots = new ItemStackHandler(1) {
+
+    @Override
+    protected void onContentsChanged(int slot) {
+      TileUncraft.this.status = UncraftStatusEnum.EMPTY;
+    };
+  };
+  ItemStackHandler outputSlots = new ItemStackHandler(8 * 2) {
+
+    @Override
+    protected void onContentsChanged(int slot) {
+      if (TileUncraft.this.status == UncraftStatusEnum.NOROOM) {
+        TileUncraft.this.status = UncraftStatusEnum.EMPTY;
+      }
+    };
+  };
   private ItemStackHandlerWrapper inventory = new ItemStackHandlerWrapper(inputSlots, outputSlots);
   private LazyOptional<IEnergyStorage> energyCap = LazyOptional.of(() -> energy);
   private LazyOptional<IItemHandler> inventoryCap = LazyOptional.of(() -> inventory);
@@ -65,6 +78,7 @@ public class TileUncraft extends TileEntityBase implements ITickableTileEntity, 
     ItemStack dropMe = inputSlots.getStackInSlot(0).copy();
     if (dropMe.isEmpty()) {
       this.status = UncraftStatusEnum.EMPTY;
+      timer = TIMER.get();
       return;
     }
     if (this.requiresRedstone() && !this.isPowered()) {
@@ -77,8 +91,11 @@ public class TileUncraft extends TileEntityBase implements ITickableTileEntity, 
     }
     setLitProperty(true);
     //only tick down if we have enough energy and have a valid item
-    timer--;
-    if (timer > 0) {
+    if (this.status != UncraftStatusEnum.EMPTY && this.status != UncraftStatusEnum.MATCH) {
+      this.timer = TIMER.get();
+      return;
+    }
+    if (--timer > 0) {
       return;
     }
     timer = TIMER.get();
@@ -158,14 +175,13 @@ public class TileUncraft extends TileEntityBase implements ITickableTileEntity, 
     //do we have space for out?
     boolean simulate = true;
     for (ItemStack r : result) {
-      ItemStack rOut = ItemStack.EMPTY;
+      ItemStack rOut = r;
       for (int i = 0; i < outputSlots.getSlots(); i++) {
-        if (!r.isEmpty()) {
-          rOut = ItemStack.EMPTY;
-          rOut = outputSlots.insertItem(i, r.copy(), simulate);
+        if (!rOut.isEmpty()) {
+          rOut = outputSlots.insertItem(i, rOut, simulate);
         }
       }
-      if (!rOut.isEmpty()) {
+      if (!rOut.isEmpty()) { //This doesn't actually work - it will succeed if there is so much as 1 open slot. But idk how to fix it without being lag-inducing.
         this.status = UncraftStatusEnum.NOROOM;
         return false;
       }
@@ -201,12 +217,6 @@ public class TileUncraft extends TileEntityBase implements ITickableTileEntity, 
   // matches count and has enough
   @SuppressWarnings("unchecked")
   private boolean recipeMatches(ItemStack stack, IRecipe<?> recipe) {
-    //    if (stack.getTag() != null && stack.getTag().keySet().size() == 1 && stack.getTag().keySet().contains(Const.NBT_REPAIR_COST)) {
-    //      //what is it
-    //      stack.setTag(null);
-    //    }
-    // do items match
-    //    ModCyclic.LOGGER.info("recipe id" + recipe.getId());
     if (stack.isEmpty() ||
         recipe == null ||
         recipe.getRecipeOutput().isEmpty() ||
@@ -229,7 +239,6 @@ public class TileUncraft extends TileEntityBase implements ITickableTileEntity, 
     //both itemstacks are non-empty, and we have enough quantity
     boolean matches = false;
     if (TileUncraft.IGNORE_NBT.get()) {
-      ModCyclic.LOGGER.info("Uncrafter NBT ignored " + stack.getTag());
       matches = stack.getItem() == recipe.getRecipeOutput().getItem();
     }
     else {

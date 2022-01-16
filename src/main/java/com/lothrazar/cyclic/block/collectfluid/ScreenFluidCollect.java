@@ -2,7 +2,7 @@ package com.lothrazar.cyclic.block.collectfluid;
 
 import com.lothrazar.cyclic.base.ScreenBase;
 import com.lothrazar.cyclic.block.miner.TileMiner;
-import com.lothrazar.cyclic.gui.ButtonMachineRedstone;
+import com.lothrazar.cyclic.gui.ButtonMachineField;
 import com.lothrazar.cyclic.gui.EnergyBar;
 import com.lothrazar.cyclic.gui.FluidBar;
 import com.lothrazar.cyclic.gui.GuiSliderInteger;
@@ -16,8 +16,8 @@ public class ScreenFluidCollect extends ScreenBase<ContainerFluidCollect> {
 
   private EnergyBar energy;
   private FluidBar fluid;
-  private ButtonMachineRedstone btnRedstone;
-  private ButtonMachineRedstone btnRender;
+  private ButtonMachineField btnRedstone;
+  private ButtonMachineField btnRender;
 
   public ScreenFluidCollect(ContainerFluidCollect screenContainer, PlayerInventory inv, ITextComponent titleIn) {
     super(screenContainer, inv, titleIn);
@@ -32,10 +32,10 @@ public class ScreenFluidCollect extends ScreenBase<ContainerFluidCollect> {
     energy.guiTop = fluid.guiTop = guiTop;
     energy.visible = TileFluidCollect.POWERCONF.get() > 0;
     int x, y;
-    x = guiLeft + 8;
-    y = guiTop + 8;
-    btnRedstone = addButton(new ButtonMachineRedstone(x, y, TileFluidCollect.Fields.REDSTONE.ordinal(), container.tile.getPos()));
-    btnRender = addButton(new ButtonMachineRedstone(x, y + 20, TileFluidCollect.Fields.RENDER.ordinal(),
+    x = guiLeft + 6;
+    y = guiTop + 6;
+    btnRedstone = addButton(new ButtonMachineField(x, y, TileFluidCollect.Fields.REDSTONE.ordinal(), container.tile.getPos()));
+    btnRender = addButton(new ButtonMachineField(x, y + 20, TileFluidCollect.Fields.RENDER.ordinal(),
         container.tile.getPos(), TextureEnum.RENDER_HIDE, TextureEnum.RENDER_SHOW, "gui.cyclic.render"));
     //
     //

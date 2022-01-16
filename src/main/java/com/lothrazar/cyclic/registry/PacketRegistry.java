@@ -13,7 +13,9 @@ import com.lothrazar.cyclic.net.PacketFluidSync;
 import com.lothrazar.cyclic.net.PacketItemGui;
 import com.lothrazar.cyclic.net.PacketItemScroll;
 import com.lothrazar.cyclic.net.PacketItemToggle;
+import com.lothrazar.cyclic.net.PacketKeyBind;
 import com.lothrazar.cyclic.net.PacketPlayerFalldamage;
+import com.lothrazar.cyclic.net.PacketRecordSound;
 import com.lothrazar.cyclic.net.PacketRotateBlock;
 import com.lothrazar.cyclic.net.PacketStorageBagScreen;
 import com.lothrazar.cyclic.net.PacketTileData;
@@ -57,6 +59,8 @@ public class PacketRegistry {
     INSTANCE.registerMessage(id++, PacketCraftAction.class, PacketCraftAction::encode, PacketCraftAction::decode, PacketCraftAction::handle);
     INSTANCE.registerMessage(id++, PacketFilterCard.class, PacketFilterCard::encode, PacketFilterCard::decode, PacketFilterCard::handle);
     INSTANCE.registerMessage(id++, PacketItemScroll.class, PacketItemScroll::encode, PacketItemScroll::decode, PacketItemScroll::handle);
+    INSTANCE.registerMessage(id++, PacketKeyBind.class, PacketKeyBind::encode, PacketKeyBind::decode, PacketKeyBind::handle);
+    INSTANCE.registerMessage(id++, PacketRecordSound.class, PacketRecordSound::encode, PacketRecordSound::decode, PacketRecordSound::handle);
   }
 
   public static void sendToAllClients(World world, PacketBase packet) {

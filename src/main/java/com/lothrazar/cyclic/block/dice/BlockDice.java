@@ -4,7 +4,6 @@ import com.lothrazar.cyclic.base.BlockBase;
 import com.lothrazar.cyclic.registry.SoundRegistry;
 import com.lothrazar.cyclic.util.UtilBlockstates;
 import com.lothrazar.cyclic.util.UtilSound;
-import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
@@ -17,18 +16,14 @@ import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class BlockDice extends BlockBase {
 
@@ -56,7 +51,6 @@ public class BlockDice extends BlockBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
     RenderTypeLookup.setRenderLayer(this, RenderType.getCutoutMipped());
   }
@@ -90,16 +84,5 @@ public class BlockDice extends BlockBase {
       return ActionResultType.SUCCESS;
     }
     return super.onBlockActivated(state, world, pos, player, hand, result);
-  }
-
-  /**
-   * TODO: util
-   * 
-   * @param rand
-   * @return
-   */
-  public static Direction getRandom(Random rand) {
-    int index = MathHelper.nextInt(rand, 0, Direction.values().length - 1);
-    return Direction.values()[index];
   }
 }

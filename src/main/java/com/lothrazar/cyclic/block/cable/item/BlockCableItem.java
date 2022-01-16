@@ -25,8 +25,6 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
@@ -37,7 +35,6 @@ public class BlockCableItem extends CableBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
     ScreenManager.registerFactory(ContainerScreenRegistry.item_pipe, ScreenCableItem::new);
   }
@@ -108,9 +105,10 @@ public class BlockCableItem extends CableBase {
       IItemHandler cap = facingTile == null ? null : facingTile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, d.getOpposite()).orElse(null);
       if (cap != null) {
         stateIn = stateIn.with(FACING_TO_PROPERTY_MAP.get(d), EnumConnectType.INVENTORY);
+        worldIn.setBlockState(pos, stateIn);
       }
     }
-    worldIn.setBlockState(pos, stateIn);
+    super.onBlockPlacedBy(worldIn, pos, stateIn, placer, stack);
   }
 
   @Override
@@ -122,7 +120,7 @@ public class BlockCableItem extends CableBase {
     }
     if (isItem(stateIn, facing, facingState, world, currentPos, facingPos)) {
       BlockState with = stateIn.with(property, EnumConnectType.INVENTORY);
-      if (world instanceof World) {
+      if (world instanceof World && world.getBlockState(currentPos).getBlock() == this) {
         //hack to force {any} -> inventory IF its here
         ((World) world).setBlockState(currentPos, with);
       }

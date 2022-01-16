@@ -14,8 +14,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class BlockUser extends BlockBase {
 
@@ -25,9 +23,8 @@ public class BlockUser extends BlockBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
-    ScreenManager.registerFactory(ContainerScreenRegistry.user, ScreenUser::new);
+    ScreenManager.registerFactory(ContainerScreenRegistry.USER, ScreenUser::new);
   }
 
   @Override

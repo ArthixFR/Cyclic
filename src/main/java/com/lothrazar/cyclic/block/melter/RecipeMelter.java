@@ -114,6 +114,7 @@ public class RecipeMelter<TileEntityBase> extends CyclicRecipe {
         }
         JsonObject result = json.get("result").getAsJsonObject();
         int count = result.get("count").getAsInt();
+        //TODO: shared get fluid
         String fluidId = JSONUtils.getString(result, "fluid");
         ResourceLocation resourceLocation = new ResourceLocation(fluidId);
         Fluid fluid = ForgeRegistries.FLUIDS.getValue(resourceLocation);
@@ -122,7 +123,7 @@ public class RecipeMelter<TileEntityBase> extends CyclicRecipe {
       catch (Exception e) {
         ModCyclic.LOGGER.error("Error loading recipe" + recipeId, e);
       }
-      ModCyclic.LOGGER.info("Recipe loaded " + r.getId().toString());
+      ModCyclic.LOGGER.info("Recipe loaded " + recipeId);
       return r;
     }
 

@@ -16,12 +16,16 @@ import com.lothrazar.cyclic.block.endershelf.EnderShelfItemHandler;
 import com.lothrazar.cyclic.block.eye.TileEye;
 import com.lothrazar.cyclic.block.eyetp.TileEyeTp;
 import com.lothrazar.cyclic.block.forester.TileForester;
+import com.lothrazar.cyclic.block.generatorfood.TileGeneratorFood;
+import com.lothrazar.cyclic.block.generatorfuel.TileGeneratorFuel;
 import com.lothrazar.cyclic.block.harvester.TileHarvester;
 import com.lothrazar.cyclic.block.melter.TileMelter;
 import com.lothrazar.cyclic.block.miner.TileMiner;
+import com.lothrazar.cyclic.block.packager.TilePackager;
 import com.lothrazar.cyclic.block.peatfarm.TilePeatFarm;
 import com.lothrazar.cyclic.block.shapebuilder.TileStructure;
 import com.lothrazar.cyclic.block.solidifier.TileSolidifier;
+import com.lothrazar.cyclic.block.soundrecord.BlockSoundRecorder;
 import com.lothrazar.cyclic.block.sprinkler.TileSprinkler;
 import com.lothrazar.cyclic.block.uncrafter.TileUncraft;
 import com.lothrazar.cyclic.block.user.TileUser;
@@ -45,13 +49,16 @@ import com.lothrazar.cyclic.enchant.EnchantVenom;
 import com.lothrazar.cyclic.enchant.EnchantXp;
 import com.lothrazar.cyclic.item.EdibleFlightItem;
 import com.lothrazar.cyclic.item.EdibleSpecItem;
+import com.lothrazar.cyclic.item.OreProspector;
 import com.lothrazar.cyclic.item.TeleporterWandItem;
 import com.lothrazar.cyclic.item.bauble.AutoCaveTorchItem;
+import com.lothrazar.cyclic.item.bauble.AutoTorchItem;
 import com.lothrazar.cyclic.item.heart.HeartItem;
 import com.lothrazar.cyclic.item.transporter.TileTransporterEmptyItem;
 import com.lothrazar.cyclic.registry.CommandRegistry.CyclicCommands;
 import com.lothrazar.cyclic.registry.MaterialRegistry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +75,7 @@ public class ConfigRegistry {
   private static final ForgeConfigSpec.Builder CFGC = new ForgeConfigSpec.Builder();
   // Defaults
   private static final List<String> BEHEADING = new ArrayList<>();
-  private static final List<String> UNCRAFT = new ArrayList<>();
+  private static final List<String> UNCRAFT_IGNORE_ITEMS = new ArrayList<>();
   private static final List<String> MBALL_IGNORE = new ArrayList<>();
   private static final List<String> UNCRAFT_RECIPE_IDS = new ArrayList<>();
   private static final List<String> TRANSPORTBAG = new ArrayList<>();
@@ -102,7 +109,6 @@ public class ConfigRegistry {
     //mhf https://twitter.com/Marc_IRL/status/542330244473311232  https://pastebin.com/5mug6EBu
     //other https://www.planetminecraft.com/blog/minecraft-playerheads-2579899/
     //NBT image data from  http://www.minecraft-heads.com/custom/heads/animals/6746-llama
-    //TODO config file for extra mod support 
     BEHEADING.add("minecraft:blaze:MHF_Blaze");
     BEHEADING.add("minecraft:cat:MHF_Ocelot");
     BEHEADING.add("minecraft:cave_spider:MHF_CaveSpider");
@@ -130,13 +136,15 @@ public class ConfigRegistry {
     BEHEADING.add("minecraft:endermite:MHF_Endermite");
     //
     //most of these are ported direct from 1.12 defaults, idk if these mods or items exist anymore
-    UNCRAFT.add("minecraft:elytra");
-    UNCRAFT.add("minecraft:tipped_arrow");
-    UNCRAFT.add("minecraft:*_dye"); //getting flowers etc feels bad 
-    UNCRAFT.add("spectrite:spectrite_arrow");
-    UNCRAFT.add("spectrite:spectrite_arrow_special");
-    UNCRAFT.add("techreborn:uumatter");
-    UNCRAFT.add("projecte:*");
+    UNCRAFT_IGNORE_ITEMS.add("minecraft:elytra");
+    UNCRAFT_IGNORE_ITEMS.add("minecraft:tipped_arrow");
+    UNCRAFT_IGNORE_ITEMS.add("minecraft:magma_block");
+    UNCRAFT_IGNORE_ITEMS.add("minecraft:stick");
+    UNCRAFT_IGNORE_ITEMS.add("minecraft:*_dye"); //getting flowers etc feels bad 
+    UNCRAFT_IGNORE_ITEMS.add("spectrite:spectrite_arrow");
+    UNCRAFT_IGNORE_ITEMS.add("spectrite:spectrite_arrow_special");
+    UNCRAFT_IGNORE_ITEMS.add("techreborn:uumatter");
+    UNCRAFT_IGNORE_ITEMS.add("projecte:*");
     //
     UNCRAFT_RECIPE_IDS.add("botania:cobweb");
     UNCRAFT_RECIPE_IDS.add("minecraft:magma_cream");
@@ -146,13 +154,20 @@ public class ConfigRegistry {
     UNCRAFT_RECIPE_IDS.add("mysticalagriculture:essence*");
     UNCRAFT_RECIPE_IDS.add("mysticalagriculture:farmland_till");
     UNCRAFT_RECIPE_IDS.add("refinedstorage:coloring_recipes*");
+    UNCRAFT_RECIPE_IDS.add("forcecraft:transmutation*");
     //
-    TRANSPORTBAG.add("minecraft:spawner");
-    TRANSPORTBAG.add("parabox:parabox");
-    TRANSPORTBAG.add("extracells:fluidcrafter");
-    TRANSPORTBAG.add("extracells:ecbaseblock");
-    TRANSPORTBAG.add("extracells:fluidfiller");
-    //
+    TRANSPORTBAG.addAll(Arrays.asList(
+        //legacy
+        "parabox:parabox", "extracells:fluidcrafter", "extracells:ecbaseblock", "extracells:fluidfiller",
+        //entire mods
+        "exnihilosequentia:*", "refinedstorage:*",
+        //tconctruct fluid processing
+        "tconstruct:seared_fuel_tank", "tconstruct:smeltery_controller", "tconstruct:seared_drain", "tconstruct:seared_fuel_gauge", "tconstruct:seared_ingot_tank", "tconstruct:seared_ingot_gauge", "tconstruct:seared_melter", "tconstruct:seared_heater",
+        //drains and ducts
+        "tconstruct:scorched_drain", "tconstruct:scorched_duct", "tconstruct:scorched_chute", "tconstruct:foundry_controller", "tconstruct:scorched_alloyer",
+        //rftools batteries
+        "rftoolspower:cell3", "rftoolspower:cell2", "rftoolspower:cell1", "rftoolspower:cell3", "rftoolspower:cell2", "rftoolspower:cell1"));
+    // 
     MBALL_IGNORE.add("minecraft:ender_dragon");
     MBALL_IGNORE.add("minecraft:wither");
   }
@@ -207,8 +222,15 @@ public class ConfigRegistry {
     PEATERICHPOWER = CFG.comment("Power gained burning one of this")
         .defineInRange("peat_fuel_enriched", 256 * 4, 1, 64000);
     CFG.pop(); //fuel
+    TileGeneratorFuel.RF_PER_TICK = CFG.comment("RF energy per tick generated while burning furnace fuel in this machine.  Burn time in ticks is the same as furnace values, so 1 coal = 1600 ticks")
+        .defineInRange("generator_fuel.rf_per_tick", 80, 1, 6400);
+    TileGeneratorFood.RF_PER_TICK = CFG.comment("RF energy per tick generated while burning food in this machine")
+        .defineInRange("generator_food.rf_per_tick", 60, 1, 6400);
+    TileGeneratorFood.TICKS_PER_FOOD = CFG.comment("This [factor * (item.food + item.saturation) = ticks] results in the number of ticks food will burn at. IE Bread has (5 + 0.6) with factor 100, will burn for 560 ticks.")
+        .defineInRange("generator_food.ticks_per_food", 100, 1, 6400);
     CFG.comment(WALL, "Energy cost for various machines, either per use of an action or per tick (twenty ticks per second).", WALL)
         .push("cost");
+    TilePackager.POWERCONF = CFG.comment("Power per recipe in the packager").defineInRange("packager", 50, 0, 64000);
     TileDisenchant.POWERCONF = CFG.comment("Power per use disenchanter").defineInRange("disenchanter", 2500, 0, 64000);
     TileUser.POWERCONF = CFG.comment("Power per use user").defineInRange("user", 50, 0, 64000);
     TileAnvilAuto.POWERCONF = CFG.comment("Power per repair anvil").defineInRange("anvil", 250, 0, 64000);
@@ -234,6 +256,7 @@ public class ConfigRegistry {
     TileAnvilVoid.FLUIDPAY = CFG.comment("Payment per void action, if not zero").defineInRange("void_anvil", 25, 0, 16000);
     CFG.pop(); //fluid
     CFG.comment(WALL, " Item specific configs", WALL).push("items");
+    OreProspector.RANGE = CFG.comment("Ore Prospector radius around player to search for ores").defineInRange("prospector.range", 32, 1, 99);
     CFG.comment(WALL, " Emerald gear settings", WALL).push("emerald");
     MaterialRegistry.EMERALD_TOUGH = CFG.comment("Armor toughness").defineInRange("toughness", 3.0F, 0.1F, 99F);
     MaterialRegistry.EMERALD_DMG = CFG.comment("Weapon damage").defineInRange("damage", 4.5F, 0.1F, 99F);
@@ -254,7 +277,7 @@ public class ConfigRegistry {
     CFG.pop();
     //
     CFG.comment(WALL, " Settings for varios charms (curios)", WALL).push("charms");
-    //
+    AutoTorchItem.LIGHT_LEVEL = CFG.comment("Light level limit for placing torches").defineInRange("charm_torch.light_level", 9, 0, 15);
     CHARM_LUCK = CFG.comment("Boost given by item charm_luck").defineInRange("luck", 10, 0, 100);
     CHARM_SPEED = CFG.comment("Boost given by item charm_speed").defineInRange("speed", 0.5F, 0, 2F);
     CHARM_ATTACKSPEED = CFG.comment("Boost given by item charm_attackspeed").defineInRange("attackspeed", 0.5F, 0, 2F);
@@ -300,6 +323,9 @@ public class ConfigRegistry {
     CFG.pop(); //items
     CFG.comment(WALL, " Block specific configs", WALL)
         .push("blocks");
+    CFG.comment("Ender shelf settings").push("sound");
+    BlockSoundRecorder.RADIUS = CFG.comment("Sound Recorder - how far out does it listen to record sounds").defineInRange("radius", 8, 1, 64);
+    CFG.pop();
     CFG.comment("Ender shelf settings").push("ender_shelf");
     EnderShelfItemHandler.BOOKS_PER_ROW = CFG.comment("Each shelf has five rows.  Set the number of books stored per row here").defineInRange("books_per_row", 64, 1, 64);
     EnderShelfHelper.MAX_DIST = CFG.comment("Controller Max distance to search (using manhattan distance)").defineInRange("controller_distance", 64, 1, 256);
@@ -322,10 +348,11 @@ public class ConfigRegistry {
     CFG.pop();
     //
     CFG.comment("Uncrafter settings").push("uncrafter");
-    TileUncraft.IGNORE_NBT = CFG.comment("When searching for a recipe, does it ignore all NBT values (such as enchantments, RepairCost, Damage, etc).  "
+    TileUncraft.IGNORE_NBT = CFG.comment("False will mean you cannot uncraft damaged repairable items. When searching for a recipe, does it ignore all NBT values (such as enchantments, RepairCost, Damage, etc).  "
         + "For example, if false it will not uncraft damaged or enchanted items")
-        .define("nbt_ignored", true);
-    TileUncraft.IGNORELIST = CFG.comment("ITEM IDS HERE.  Block ALL recipes that output this item, no matter which recipe they use").defineList("ignore_list", UNCRAFT, it -> it instanceof String);
+        .define("nbt_ignored", false);
+    TileUncraft.IGNORELIST = CFG.comment("ITEM IDS HERE.  Block ALL recipes that output this item, no matter which recipe they use. For example, if you add 'minecraft:stick' here, all recipes that craft into one or more sticks will be disabled (including two wooden planks).")
+        .defineList("ignore_list", UNCRAFT_IGNORE_ITEMS, it -> it instanceof String);
     TileUncraft.IGNORELIST_RECIPES = CFG.comment("RECIPE IDS HERE.  Block these recipe ids from being reversed, but do not block all recipes for this output item")
         .defineList("ignore_recipes", UNCRAFT_RECIPE_IDS, it -> it instanceof String);
     TileUncraft.TIMER = CFG.comment("Ticks used for each uncraft").defineInRange("ticks", 60, 1, 9999);

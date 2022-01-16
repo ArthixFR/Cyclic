@@ -2,10 +2,13 @@ package com.lothrazar.cyclic.event;
 
 import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.base.IHasClickToggle;
+import com.lothrazar.cyclic.item.inventorycake.ItemCakeInventory;
 import com.lothrazar.cyclic.item.storagebag.ItemStorageBag;
 import com.lothrazar.cyclic.net.PacketItemGui;
 import com.lothrazar.cyclic.net.PacketItemScroll;
 import com.lothrazar.cyclic.net.PacketItemToggle;
+import com.lothrazar.cyclic.registry.ClientRegistryCyclic;
+import com.lothrazar.cyclic.registry.EnchantRegistry;
 import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.registry.PacketRegistry;
 import net.minecraft.client.Minecraft;
@@ -15,10 +18,19 @@ import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.InputEvent.KeyInputEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ClientInputEvents {
+
+  @SubscribeEvent
+  public void onKeyInput(KeyInputEvent event) {
+    EnchantRegistry.LAUNCH.onKeyInput(Minecraft.getInstance().player);
+    if (ClientRegistryCyclic.CAKE.isPressed()) {
+      ItemCakeInventory.onKeyInput(Minecraft.getInstance().player);
+    }
+  }
 
   @SubscribeEvent
   public void onMouseEvent(InputEvent.MouseScrollEvent event) {

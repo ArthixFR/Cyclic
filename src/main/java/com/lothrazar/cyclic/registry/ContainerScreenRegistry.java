@@ -22,11 +22,16 @@ import com.lothrazar.cyclic.block.expcollect.ContainerExpPylon;
 import com.lothrazar.cyclic.block.fan.ContainerFan;
 import com.lothrazar.cyclic.block.fishing.ContainerFisher;
 import com.lothrazar.cyclic.block.forester.ContainerForester;
-import com.lothrazar.cyclic.block.generatorpeat.ContainerGenerator;
+import com.lothrazar.cyclic.block.generatorfluid.ContainerGeneratorFluid;
+import com.lothrazar.cyclic.block.generatorfood.ContainerGeneratorFood;
+import com.lothrazar.cyclic.block.generatorfuel.ContainerGeneratorFuel;
+import com.lothrazar.cyclic.block.generatoritem.ContainerGeneratorDrops;
+import com.lothrazar.cyclic.block.generatorpeat.ContainerGeneratorPeat;
 import com.lothrazar.cyclic.block.harvester.ContainerHarvester;
 import com.lothrazar.cyclic.block.laser.ContainerLaser;
 import com.lothrazar.cyclic.block.melter.ContainerMelter;
 import com.lothrazar.cyclic.block.miner.ContainerMiner;
+import com.lothrazar.cyclic.block.packager.ContainerPackager;
 import com.lothrazar.cyclic.block.peatfarm.ContainerPeatFarm;
 import com.lothrazar.cyclic.block.placer.ContainerPlacer;
 import com.lothrazar.cyclic.block.placerfluid.ContainerPlacerFluid;
@@ -34,9 +39,12 @@ import com.lothrazar.cyclic.block.screen.ContainerScreentext;
 import com.lothrazar.cyclic.block.shapebuilder.ContainerStructure;
 import com.lothrazar.cyclic.block.shapedata.ContainerShapedata;
 import com.lothrazar.cyclic.block.solidifier.ContainerSolidifier;
+import com.lothrazar.cyclic.block.soundplay.ContainerSoundPlayer;
+import com.lothrazar.cyclic.block.soundrecord.ContainerSoundRecorder;
 import com.lothrazar.cyclic.block.uncrafter.ContainerUncraft;
 import com.lothrazar.cyclic.block.user.ContainerUser;
 import com.lothrazar.cyclic.block.wireless.energy.ContainerWirelessEnergy;
+import com.lothrazar.cyclic.block.wireless.fluid.ContainerWirelessFluid;
 import com.lothrazar.cyclic.block.wireless.item.ContainerWirelessItem;
 import com.lothrazar.cyclic.block.wireless.redstone.ContainerTransmit;
 import com.lothrazar.cyclic.block.workbench.ContainerWorkbench;
@@ -44,6 +52,7 @@ import com.lothrazar.cyclic.item.crafting.CraftingBagContainer;
 import com.lothrazar.cyclic.item.craftingsimple.CraftingStickContainer;
 import com.lothrazar.cyclic.item.datacard.filter.ContainerFilterCard;
 import com.lothrazar.cyclic.item.enderbook.ContainerEnderBook;
+import com.lothrazar.cyclic.item.inventorycake.ContainerCake;
 import com.lothrazar.cyclic.item.storagebag.ContainerStorageBag;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraftforge.common.extensions.IForgeContainerType;
@@ -66,7 +75,7 @@ public class ContainerScreenRegistry {
       return new ContainerItemCollector(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
     }).setRegistryName("collector"));
     r.register(IForgeContainerType.create((windowId, inv, data) -> {
-      return new ContainerGenerator(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+      return new ContainerGeneratorPeat(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
     }).setRegistryName("peat_generator"));
     r.register(IForgeContainerType.create((windowId, inv, data) -> {
       return new ContainerPeatFarm(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
@@ -179,6 +188,30 @@ public class ContainerScreenRegistry {
     r.register(IForgeContainerType.create((windowId, inv, data) -> {
       return new ContainerWirelessItem(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
     }).setRegistryName("wireless_item"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerWirelessFluid(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("wireless_fluid"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerGeneratorFuel(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("generator_fuel"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerGeneratorFood(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("generator_food"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerGeneratorDrops(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("generator_item"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerGeneratorFluid(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("generator_fluid"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerPackager(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("packager"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerSoundRecorder(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("sound_recorder"));
+    r.register(IForgeContainerType.create((windowId, inv, data) -> {
+      return new ContainerSoundPlayer(windowId, inv.player.world, data.readBlockPos(), inv, inv.player);
+    }).setRegistryName("sound_player"));
     //
     //  Items with containers
     //
@@ -187,8 +220,21 @@ public class ContainerScreenRegistry {
     r.register(IForgeContainerType.create(((windowId, inv, data) -> new CraftingBagContainer(windowId, inv, inv.player))).setRegistryName("crafting_bag"));
     r.register(IForgeContainerType.create(((windowId, inv, data) -> new CraftingStickContainer(windowId, inv, inv.player, null))).setRegistryName("crafting_stick"));
     r.register(IForgeContainerType.create(((windowId, inv, data) -> new ContainerFilterCard(windowId, inv, inv.player))).setRegistryName("filter_data"));
+    r.register(IForgeContainerType.create(((windowId, inv, data) -> new ContainerCake(windowId, inv, inv.player))).setRegistryName("inventory_cake"));
   }
 
+  @ObjectHolder(ModCyclic.MODID + ":sound_player")
+  public static ContainerType<ContainerSoundPlayer> SOUND_PLAYER;
+  @ObjectHolder(ModCyclic.MODID + ":sound_recorder")
+  public static ContainerType<ContainerSoundRecorder> SOUND_RECORDER;
+  @ObjectHolder(ModCyclic.MODID + ":generator_food")
+  public static ContainerType<ContainerGeneratorFood> GENERATOR_FOOD;
+  @ObjectHolder(ModCyclic.MODID + ":generator_fuel")
+  public static ContainerType<ContainerGeneratorFuel> generator_fuel;
+  @ObjectHolder(ModCyclic.MODID + ":inventory_cake")
+  public static ContainerType<ContainerCake> inventory_cake;
+  @ObjectHolder(ModCyclic.MODID + ":wireless_fluid")
+  public static ContainerType<ContainerWirelessFluid> wireless_fluid;
   @ObjectHolder(ModCyclic.MODID + ":wireless_item")
   public static ContainerType<ContainerWirelessItem> wireless_item;
   @ObjectHolder(ModCyclic.MODID + ":wireless_energy")
@@ -226,55 +272,61 @@ public class ContainerScreenRegistry {
   @ObjectHolder(ModCyclic.MODID + ":collector")
   public static ContainerType<ContainerItemCollector> collector;
   @ObjectHolder(ModCyclic.MODID + ":peat_generator")
-  public static ContainerType<ContainerGenerator> generatorCont;
+  public static ContainerType<ContainerGeneratorPeat> generatorCont;
   @ObjectHolder(ModCyclic.MODID + ":peat_farm")
   public static ContainerType<ContainerPeatFarm> peat_farm;
   @ObjectHolder(ModCyclic.MODID + ":harvester")
   public static ContainerType<ContainerHarvester> harvester;
   @ObjectHolder(ModCyclic.MODID + ":experience_pylon")
-  public static ContainerType<ContainerExpPylon> experience_pylon;
+  public static ContainerType<ContainerExpPylon> EXPERIENCE_PYLON;
   @ObjectHolder(ModCyclic.MODID + ":user")
-  public static ContainerType<ContainerUser> user;
+  public static ContainerType<ContainerUser> USER;
   @ObjectHolder(ModCyclic.MODID + ":detector_entity")
-  public static ContainerType<ContainerDetector> detector_entity;
+  public static ContainerType<ContainerDetector> DETECTOR_ENTITY;
   @ObjectHolder(ModCyclic.MODID + ":detector_item")
-  public static ContainerType<ContainerDetectorItem> detector_item;
+  public static ContainerType<ContainerDetectorItem> DETECTOR_ITEM;
   @ObjectHolder(ModCyclic.MODID + ":disenchanter")
-  public static ContainerType<ContainerDisenchant> disenchanter;
+  public static ContainerType<ContainerDisenchant> DISENCHANTER;
   @ObjectHolder(ModCyclic.MODID + ":wireless_transmitter")
-  public static ContainerType<ContainerTransmit> wireless_transmitter;
+  public static ContainerType<ContainerTransmit> WIRELESS_TRANSMITTER;
   @ObjectHolder(ModCyclic.MODID + ":clock")
-  public static ContainerType<ContainerClock> clock;
+  public static ContainerType<ContainerClock> CLOCK;
   @ObjectHolder(ModCyclic.MODID + ":crate")
-  public static ContainerType<ContainerCrate> crate;
+  public static ContainerType<ContainerCrate> CRATE;
   @ObjectHolder(ModCyclic.MODID + ":placer_fluid")
-  public static ContainerType<ContainerPlacerFluid> placer_fluid;
+  public static ContainerType<ContainerPlacerFluid> PLACER_FLUID;
   @ObjectHolder(ModCyclic.MODID + ":collector_fluid")
-  public static ContainerType<ContainerFluidCollect> collector_fluid;
+  public static ContainerType<ContainerFluidCollect> COLLECTOR_FLUID;
   @ObjectHolder(ModCyclic.MODID + ":fan")
-  public static ContainerType<ContainerFan> fan;
+  public static ContainerType<ContainerFan> FAN;
   @ObjectHolder(ModCyclic.MODID + ":uncrafter")
-  public static ContainerType<ContainerUncraft> uncraft;
+  public static ContainerType<ContainerUncraft> UNCRAFT;
   @ObjectHolder(ModCyclic.MODID + ":crafter")
-  public static ContainerType<ContainerCrafter> crafter;
+  public static ContainerType<ContainerCrafter> CRAFTER;
   @ObjectHolder(ModCyclic.MODID + ":anvil_magma")
-  public static ContainerType<ContainerAnvilMagma> anvil_magma;
+  public static ContainerType<ContainerAnvilMagma> ANVIL_MAGMA;
   @ObjectHolder(ModCyclic.MODID + ":beacon")
-  public static ContainerType<ContainerPotion> beacon;
+  public static ContainerType<ContainerPotion> BEACON;
   @ObjectHolder(ModCyclic.MODID + ":dropper")
-  public static ContainerType<ContainerDropper> dropper;
+  public static ContainerType<ContainerDropper> DROPPER;
   @ObjectHolder(ModCyclic.MODID + ":forester")
-  public static ContainerType<ContainerForester> forester;
+  public static ContainerType<ContainerForester> FORESTER;
   @ObjectHolder(ModCyclic.MODID + ":miner")
-  public static ContainerType<ContainerMiner> miner;
+  public static ContainerType<ContainerMiner> MINER;
   @ObjectHolder(ModCyclic.MODID + ":screen")
-  public static ContainerType<ContainerScreentext> screen;
+  public static ContainerType<ContainerScreentext> SCREEN;
   @ObjectHolder(ModCyclic.MODID + ":storage_bag")
-  public static ContainerType<ContainerStorageBag> storage_bag;
+  public static ContainerType<ContainerStorageBag> STORAGE_BAG;
   @ObjectHolder(ModCyclic.MODID + ":crafting_bag")
-  public static ContainerType<CraftingBagContainer> crafting_bag;
+  public static ContainerType<CraftingBagContainer> CRAFTING_BAG;
   @ObjectHolder(ModCyclic.MODID + ":crafting_stick")
-  public static ContainerType<CraftingStickContainer> crafting_stick;
+  public static ContainerType<CraftingStickContainer> CRAFTING_STICK;
   @ObjectHolder(ModCyclic.MODID + ":workbench")
-  public static ContainerType<ContainerWorkbench> workbench;
+  public static ContainerType<ContainerWorkbench> WORKBENCH;
+  @ObjectHolder(ModCyclic.MODID + ":packager")
+  public static ContainerType<ContainerPackager> PACKAGER;
+  @ObjectHolder(ModCyclic.MODID + ":generator_fluid")
+  public static ContainerType<ContainerGeneratorFluid> GENERATOR_FLUID;
+  @ObjectHolder(ModCyclic.MODID + ":generator_item")
+  public static ContainerType<ContainerGeneratorDrops> GENERATOR_ITEM;
 }

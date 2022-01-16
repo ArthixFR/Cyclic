@@ -12,6 +12,7 @@ import java.util.List;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidAttributes;
+import net.minecraftforge.fluids.FluidStack;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.IRecipeLayout;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -29,12 +30,12 @@ public class SolidifierRecipeCategory implements IRecipeCategory<RecipeSolidifie
 
   public SolidifierRecipeCategory(IGuiHelper helper) {
     gui = helper.drawableBuilder(new ResourceLocation(ModCyclic.MODID, "textures/jei/solidifier_recipe.png"), 0, 0, 169, 69).setTextureSize(169, 69).build();
-    icon = helper.drawableBuilder(new ResourceLocation(ModCyclic.MODID, "textures/blocks/solidifier.png"), 0, 0, 16, 16).setTextureSize(16, 16).build();
+    icon = helper.createDrawableIngredient(new ItemStack(BlockRegistry.SOLIDIFIER));
   }
 
   @Override
   public String getTitle() {
-    return UtilChat.lang(BlockRegistry.solidifier.getTranslationKey());
+    return UtilChat.lang(BlockRegistry.SOLIDIFIER.getTranslationKey());
   }
 
   @Override
@@ -59,7 +60,15 @@ public class SolidifierRecipeCategory implements IRecipeCategory<RecipeSolidifie
 
   @Override
   public void setIngredients(RecipeSolidifier recipe, IIngredients ingredients) {
-    ingredients.setInput(VanillaTypes.FLUID, recipe.getRecipeFluid());
+    if (recipe.getRecipeFluid().isEmpty()) {
+      List<FluidStack> matchingFluids = recipe.fluidIngredient.getMatchingFluids();
+      if (matchingFluids != null) {
+        ingredients.setInputs(VanillaTypes.FLUID, recipe.fluidIngredient.getMatchingFluids());
+      }
+    }
+    else {
+      ingredients.setInput(VanillaTypes.FLUID, recipe.getRecipeFluid());
+    }
     List<List<ItemStack>> in = new ArrayList<>();
     List<ItemStack> stuff = new ArrayList<>();
     //    for (int i = 0; i <= 2; i++) {
@@ -92,9 +101,16 @@ public class SolidifierRecipeCategory implements IRecipeCategory<RecipeSolidifie
         guiItemStacks.set(i, input);
       }
     } //getname is the same   
-    recipeLayout.getFluidStacks().init(0, true, 4, 25, Const.SQ - 2, Const.SQ - 2,
-        FluidAttributes.BUCKET_VOLUME, false,
-        null);
-    recipeLayout.getFluidStacks().set(0, recipe.getRecipeFluid());
+    recipeLayout.getFluidStacks().init(0, true, 4, 25, Const.SQ - 2, Const.SQ - 2, FluidAttributes.BUCKET_VOLUME, false, null);
+    //tag or stack?
+    if (recipe.fluidIngredient.hasTag()) {
+      List<FluidStack> matchingFluids = recipe.fluidIngredient.getMatchingFluids();
+      if (matchingFluids != null) {
+        recipeLayout.getFluidStacks().set(0, matchingFluids);
+      }
+    }
+    else if (!recipe.getRecipeFluid().isEmpty()) {
+      recipeLayout.getFluidStacks().set(0, recipe.getRecipeFluid());
+    }
   }
 }

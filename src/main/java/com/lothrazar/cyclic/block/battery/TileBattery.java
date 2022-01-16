@@ -3,17 +3,15 @@ package com.lothrazar.cyclic.block.battery;
 import com.lothrazar.cyclic.base.TileEntityBase;
 import com.lothrazar.cyclic.capability.CustomEnergyStorage;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import java.util.Collections;
+import com.lothrazar.cyclic.util.UtilDirection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.util.Direction;
@@ -23,14 +21,27 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
+import net.minecraftforge.items.ItemStackHandler;
 
 public class TileBattery extends TileEntityBase implements INamedContainerProvider, ITickableTileEntity {
 
+  private static final int SLOT_CHARGING_RATE = 8000;
   private Map<Direction, Boolean> poweredSides;
   CustomEnergyStorage energy = new CustomEnergyStorage(MAX, MAX / 4);
   private LazyOptional<IEnergyStorage> energyCap = LazyOptional.of(() -> energy);
-  private int flowing = 0;
-  static final int MAX = 6400000;
+  public static final int MAX = 6400000;
+  ItemStackHandler batterySlots = new ItemStackHandler(1) {
+
+    @Override
+    public boolean isItemValid(int slot, ItemStack stack) {
+      return true; // TODO: is energy stack
+    }
+
+    @Override
+    public int getSlotLimit(int slot) {
+      return 1;
+    }
+  };
 
   static enum Fields {
     FLOWING, N, E, S, W, U, D;
@@ -38,6 +49,7 @@ public class TileBattery extends TileEntityBase implements INamedContainerProvid
 
   public TileBattery() {
     super(TileRegistry.batterytile);
+    flowing = 0;
     poweredSides = new HashMap<Direction, Boolean>();
     for (Direction f : Direction.values()) {
       poweredSides.put(f, false);
@@ -52,6 +64,24 @@ public class TileBattery extends TileEntityBase implements INamedContainerProvid
     setLitProperty(isFlowing);
     if (isFlowing) {
       this.tickCableFlow();
+    }
+    this.chargeSlot();
+  }
+
+  private void chargeSlot() {
+    if (world.isRemote) {
+      return;
+    }
+    ItemStack targ = this.batterySlots.getStackInSlot(0);
+    IEnergyStorage storage = targ.getCapability(CapabilityEnergy.ENERGY, null).orElse(null);
+    if (storage != null) {
+      //
+      int extracted = this.energy.extractEnergy(SLOT_CHARGING_RATE, true);
+      if (extracted > 0 && storage.getEnergyStored() + extracted <= storage.getMaxEnergyStored()) {
+        // no sim, fo real
+        energy.extractEnergy(extracted, false);
+        storage.receiveEnergy(extracted, false);
+      }
     }
   }
 
@@ -115,8 +145,8 @@ public class TileBattery extends TileEntityBase implements INamedContainerProvid
     for (Direction f : Direction.values()) {
       poweredSides.put(f, tag.getBoolean("flow_" + f.getName2()));
     }
-    setFlowing(tag.getInt("flowing"));
     energy.deserializeNBT(tag.getCompound(NBTENERGY));
+    batterySlots.deserializeNBT(tag.getCompound(NBTINV + "batt"));
     super.read(bs, tag);
   }
 
@@ -127,6 +157,7 @@ public class TileBattery extends TileEntityBase implements INamedContainerProvid
     }
     tag.putInt("flowing", getFlowing());
     tag.put(NBTENERGY, energy.serializeNBT());
+    tag.put(NBTINV + "batt", batterySlots.serializeNBT());
     return super.write(tag);
   }
 
@@ -140,12 +171,8 @@ public class TileBattery extends TileEntityBase implements INamedContainerProvid
     return new ContainerBattery(i, world, pos, playerInventory, playerEntity);
   }
 
-  private List<Integer> rawList = IntStream.rangeClosed(0, 5).boxed().collect(Collectors.toList());
-
   private void tickCableFlow() {
-    Collections.shuffle(rawList);
-    for (Integer i : rawList) {
-      Direction exportToSide = Direction.values()[i];
+    for (final Direction exportToSide : UtilDirection.getAllInDifferentOrder()) {
       if (this.poweredSides.get(exportToSide)) {
         moveEnergy(exportToSide, MAX / 4);
       }

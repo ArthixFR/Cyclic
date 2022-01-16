@@ -25,9 +25,9 @@ package com.lothrazar.cyclic.block.crafter;
 
 import com.lothrazar.cyclic.base.ScreenBase;
 import com.lothrazar.cyclic.data.Const;
-import com.lothrazar.cyclic.gui.ButtonMachineRedstone;
+import com.lothrazar.cyclic.gui.ButtonMachineField;
 import com.lothrazar.cyclic.gui.EnergyBar;
-import com.lothrazar.cyclic.gui.TimerBar;
+import com.lothrazar.cyclic.gui.TexturedProgress;
 import com.lothrazar.cyclic.registry.TextureRegistry;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
@@ -36,27 +36,29 @@ import net.minecraft.util.text.ITextComponent;
 public class ScreenCrafter extends ScreenBase<ContainerCrafter> {
 
   private EnergyBar energy;
-  private ButtonMachineRedstone btnRedstone;
-  private TimerBar timer;
+  private ButtonMachineField btnRedstone;
+  private TexturedProgress progress;
 
   public ScreenCrafter(ContainerCrafter screenContainer, PlayerInventory inv, ITextComponent titleIn) {
     super(screenContainer, inv, titleIn);
     this.ySize = 256;
     this.energy = new EnergyBar(this, TileCrafter.MAX);
     this.energy.setHeight(120);
-    this.timer = new TimerBar(this, ContainerCrafter.PREVIEW_START_X - 3, ContainerCrafter.PREVIEW_START_Y + Const.SQ + 2, TileCrafter.TIMER_FULL);
+    this.progress = new TexturedProgress(this, ContainerCrafter.PREVIEW_START_X - 3, ContainerCrafter.PREVIEW_START_Y + Const.SQ, 24, 17, TextureRegistry.ARROW);
+    this.progress.max = TileCrafter.TIMER_FULL;
+    this.progress.setTopDown(false);
   }
 
   @Override
   protected void init() {
     super.init();
     int x, y;
-    energy.guiLeft = timer.guiLeft = guiLeft;
-    energy.guiTop = timer.guiTop = guiTop;
+    energy.guiLeft = progress.guiLeft = guiLeft;
+    energy.guiTop = progress.guiTop = guiTop;
     energy.visible = TileCrafter.POWERCONF.get() > 0;
-    x = guiLeft + 8;
-    y = guiTop + 8;
-    btnRedstone = addButton(new ButtonMachineRedstone(x, y, TileCrafter.Fields.REDSTONE.ordinal(), container.tile.getPos()));
+    x = guiLeft + 6;
+    y = guiTop + 6;
+    btnRedstone = addButton(new ButtonMachineField(x, y, TileCrafter.Fields.REDSTONE.ordinal(), container.tile.getPos()));
   }
 
   @Override
@@ -93,6 +95,6 @@ public class ScreenCrafter extends ScreenBase<ContainerCrafter> {
             ContainerCrafter.GRID_START_Y - 1 + rowPos * Const.SQ);
       }
     }
-    timer.draw(ms, container.tile.getField(TileCrafter.Fields.TIMER.ordinal()));
+    progress.draw(ms, container.tile.getField(TileCrafter.Fields.TIMER.ordinal()));
   }
 }

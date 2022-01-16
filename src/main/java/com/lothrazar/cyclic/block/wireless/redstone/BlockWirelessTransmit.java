@@ -13,8 +13,6 @@ import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 public class BlockWirelessTransmit extends BlockBase {
@@ -28,9 +26,8 @@ public class BlockWirelessTransmit extends BlockBase {
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public void registerClient() {
-    ScreenManager.registerFactory(ContainerScreenRegistry.wireless_transmitter, ScreenTransmit::new);
+    ScreenManager.registerFactory(ContainerScreenRegistry.WIRELESS_TRANSMITTER, ScreenTransmit::new);
     RenderTypeLookup.setRenderLayer(this, RenderType.getCutoutMipped());
     ClientRegistry.bindTileEntityRenderer(TileRegistry.wireless_transmitter, RenderTransmit::new);
   }

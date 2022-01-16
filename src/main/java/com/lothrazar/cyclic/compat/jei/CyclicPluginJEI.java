@@ -1,8 +1,12 @@
 package com.lothrazar.cyclic.compat.jei;
 
 import com.lothrazar.cyclic.ModCyclic;
+import com.lothrazar.cyclic.block.generatorfluid.ScreenGeneratorFluid;
+import com.lothrazar.cyclic.block.generatoritem.ContainerGeneratorDrops;
+import com.lothrazar.cyclic.block.generatoritem.ScreenGeneratorDrops;
 import com.lothrazar.cyclic.block.melter.ContainerMelter;
 import com.lothrazar.cyclic.block.melter.ScreenMelter;
+import com.lothrazar.cyclic.block.packager.ScreenPackager;
 import com.lothrazar.cyclic.block.solidifier.ContainerSolidifier;
 import com.lothrazar.cyclic.block.solidifier.ScreenSolidifier;
 import com.lothrazar.cyclic.block.workbench.ContainerWorkbench;
@@ -13,11 +17,11 @@ import com.lothrazar.cyclic.registry.BlockRegistry;
 import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.util.UtilString;
 import java.util.Objects;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -52,32 +56,36 @@ public class CyclicPluginJEI implements IModPlugin {
     IGuiHelper guiHelper = registry.getJeiHelpers().getGuiHelper();
     registry.addRecipeCategories(new MelterRecipeCategory(guiHelper));
     registry.addRecipeCategories(new SolidifierRecipeCategory(guiHelper));
+    registry.addRecipeCategories(new GenitemRecipeCategory(guiHelper));
+    registry.addRecipeCategories(new GenfluidRecipeCategory(guiHelper));
+    registry.addRecipeCategories(new PackagerRecipeCategory(guiHelper));
   }
 
   @Override
   public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.crafter.asItem(), 1), VanillaRecipeCategoryUid.CRAFTING);
-    registration.addRecipeCatalyst(new ItemStack(ItemRegistry.crafting_bag, 1), VanillaRecipeCategoryUid.CRAFTING);
-    registration.addRecipeCatalyst(new ItemStack(ItemRegistry.crafting_stick, 1), VanillaRecipeCategoryUid.CRAFTING);
-    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.workbench.asItem(), 1), VanillaRecipeCategoryUid.CRAFTING);
-    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.melter.asItem(), 1), MelterRecipeCategory.ID);
-    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.solidifier.asItem(), 1), SolidifierRecipeCategory.ID);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.PACKAGER.get()), PackagerRecipeCategory.ID);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.crafter), VanillaRecipeCategoryUid.CRAFTING);
+    registration.addRecipeCatalyst(new ItemStack(ItemRegistry.crafting_bag), VanillaRecipeCategoryUid.CRAFTING);
+    registration.addRecipeCatalyst(new ItemStack(ItemRegistry.crafting_stick), VanillaRecipeCategoryUid.CRAFTING);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.WORKBENCH.get()), VanillaRecipeCategoryUid.CRAFTING);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.MELTER), MelterRecipeCategory.ID);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.SOLIDIFIER), SolidifierRecipeCategory.ID);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.GENERATOR_ITEM.get()), GenitemRecipeCategory.ID);
+    registration.addRecipeCatalyst(new ItemStack(BlockRegistry.GENERATOR_FLUID.get()), GenfluidRecipeCategory.ID);
   }
 
   @Override
   public void registerRecipes(IRecipeRegistration registry) {
     ClientWorld world = Objects.requireNonNull(Minecraft.getInstance().world);
+    registry.addRecipes(world.getRecipeManager().getRecipesForType(IRecipeType.CRAFTING), PackagerRecipeCategory.ID);
     registry.addRecipes(world.getRecipeManager().getRecipesForType(CyclicRecipeType.MELTER), MelterRecipeCategory.ID);
     registry.addRecipes(world.getRecipeManager().getRecipesForType(CyclicRecipeType.SOLID), SolidifierRecipeCategory.ID);
-    // 
+    registry.addRecipes(world.getRecipeManager().getRecipesForType(CyclicRecipeType.GENERATOR_ITEM), GenitemRecipeCategory.ID);
+    registry.addRecipes(world.getRecipeManager().getRecipesForType(CyclicRecipeType.GENERATOR_FLUID), GenfluidRecipeCategory.ID);
     for (Item item : ForgeRegistries.ITEMS.getValues()) {
-      if (UtilString.isCyclic(item.getRegistryName())) {
-        registry.addIngredientInfo(new ItemStack(item), VanillaTypes.ITEM, new TranslationTextComponent(item.getTranslationKey() + ".guide"));
-      }
-    }
-    for (Block item : ForgeRegistries.BLOCKS.getValues()) {
-      if (UtilString.isCyclic(item.getRegistryName())) {
-        registry.addIngredientInfo(new ItemStack(item), VanillaTypes.ITEM, new TranslationTextComponent(item.getTranslationKey() + ".guide"));
+      ItemStack st = new ItemStack(item);
+      if (!st.isEmpty() && UtilString.isCyclic(item.getRegistryName())) {
+        registry.addIngredientInfo(st, VanillaTypes.ITEM, new TranslationTextComponent(item.getTranslationKey() + ".guide"));
       }
     }
   }
@@ -90,6 +98,18 @@ public class CyclicPluginJEI implements IModPlugin {
     registry.addRecipeClickArea(ScreenSolidifier.class,
         75, 20,
         40, 26, SolidifierRecipeCategory.ID);
+    registry.addRecipeClickArea(ScreenGeneratorDrops.class,
+        10, 10,
+        40, 66, GenitemRecipeCategory.ID);
+    registry.addRecipeClickArea(ScreenGeneratorFluid.class,
+        50, 8,
+        20, 20, GenfluidRecipeCategory.ID);
+    //    registry.addRecipeClickArea(ScreenPackager.class,
+    //        10, 8,
+    //        50, 50, VanillaRecipeCategoryUid.CRAFTING);
+    registry.addRecipeClickArea(ScreenPackager.class,
+        60, 0,
+        60, 30, PackagerRecipeCategory.ID);
   }
 
   @Override
@@ -108,7 +128,10 @@ public class CyclicPluginJEI implements IModPlugin {
         10, PLAYER_INV_SIZE); // inventorySlotStart, inventorySlotCount
     registry.addRecipeTransferHandler(ContainerWorkbench.class, VanillaRecipeCategoryUid.CRAFTING,
         1, 9, //recipeSLotStart, recipeSlotCount
-        10, PLAYER_INV_SIZE); // inventorySlotStart, inventorySlotCount
+        10, PLAYER_INV_SIZE);
+    registry.addRecipeTransferHandler(ContainerGeneratorDrops.class, GenitemRecipeCategory.ID,
+        0, 1, //recipeSLotStart, recipeSlotCount
+        1, PLAYER_INV_SIZE); // inventorySlotStart, inventorySlotCount
     //JEI bug https://github.com/Lothrazar/Cyclic/issues/1742
     //    registry.addRecipeTransferHandler(ContainerCrafter.class, VanillaRecipeCategoryUid.CRAFTING,
     //        10, 9, //recipeSLotStart, recipeSlotCount

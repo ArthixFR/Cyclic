@@ -29,8 +29,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.FakePlayer;
@@ -89,11 +87,10 @@ public class TileMiner extends TileEntityBase implements INamedContainerProvider
   private boolean directionIsUp = false;
 
   public TileMiner() {
-    super(TileRegistry.miner);
+    super(TileRegistry.MINER);
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public AxisAlignedBB getRenderBoundingBox() {
     return TileEntity.INFINITE_EXTENT_AABB;
   }
@@ -153,12 +150,7 @@ public class TileMiner extends TileEntityBase implements INamedContainerProvider
     }
     try {
       TileEntityBase.tryEquipItem(inventoryCap, fakePlayer, 0, Hand.MAIN_HAND);
-      //TODO: does this target block match filter
       List<BlockPos> shape = getShape();
-      //        resetProgress(); 
-      //        shapeIndex = 0;
-      //        targetPos = null;
-      //      }
       if (shape.size() == 0) {
         return;
       }

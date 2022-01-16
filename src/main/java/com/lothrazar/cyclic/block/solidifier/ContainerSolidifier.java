@@ -28,7 +28,7 @@ public class ContainerSolidifier extends ContainerBase {
     addSlot(new SlotItemHandler(h, 0, 37, 17));
     addSlot(new SlotItemHandler(h, 1, 37, 17 + Const.SQ));
     addSlot(new SlotItemHandler(h, 2, 37, 17 + 2 * Const.SQ));
-    addSlot(new SlotItemHandler(tile.outputSlots, 0, 121, 31) {
+    addSlot(new SlotItemHandler(tile.outputSlots, 0, 121, 37) {
 
       @Override
       public boolean isItemValid(ItemStack stack) {
@@ -47,6 +47,6 @@ public class ContainerSolidifier extends ContainerBase {
 
   @Override
   public boolean canInteractWith(PlayerEntity playerIn) {
-    return isWithinUsableDistance(IWorldPosCallable.of(tile.getWorld(), tile.getPos()), playerEntity, BlockRegistry.solidifier);
+    return isWithinUsableDistance(IWorldPosCallable.of(tile.getWorld(), tile.getPos()), playerEntity, BlockRegistry.SOLIDIFIER);
   }
 }

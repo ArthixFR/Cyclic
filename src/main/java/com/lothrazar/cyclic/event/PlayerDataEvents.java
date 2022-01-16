@@ -33,8 +33,7 @@ public class PlayerDataEvents {
     PlayerEntity player = event.getPlayer();
     //if we have datas queued up to be saved
     if (DATA_QUEUE.containsKey(player.getUniqueID())) {
-      //yes i have data to save
-      //TODO custom obj
+      //yes i have data to save 
       CyclicFile dataToSave = DATA_QUEUE.get(player.getUniqueID());
       CompoundNBT data = dataToSave.write();
       try {
@@ -42,7 +41,7 @@ public class PlayerDataEvents {
         FileOutputStream fileoutputstream = new FileOutputStream(mctomb);
         CompressedStreamTools.writeCompressed(data, fileoutputstream);
         fileoutputstream.close();
-        //        ModCyclic.LOGGER.info("Cyclic PlayerEvent.SaveToFile" + data); 
+        ModCyclic.LOGGER.info("Cyclic PlayerEvent.SaveToFile success" + data);
       }
       catch (IOException e) {
         ModCyclic.LOGGER.error("IO cyclic file error", e);
@@ -65,16 +64,10 @@ public class PlayerDataEvents {
         fileinputstream.close();
         CyclicFile dataLoaded = new CyclicFile(player.getUniqueID());
         dataLoaded.read(data);
-        if (DATA_QUEUE.containsKey(player.getUniqueID())) {
-          // 
-          ModCyclic.LOGGER.error("? overwrite PlayerEvent.LoadFromFile " + data);
-        }
         DATA_QUEUE.put(player.getUniqueID(), dataLoaded);
-        ModCyclic.LOGGER.error("C PlayerEvent.LoadFromFile " + data);
-        //        ModCyclic.LOGGER.error("# of tombs " + dataLoaded.playerGraves.size());
       }
       catch (Exception e) {
-        ModCyclic.LOGGER.error("IO", e);
+        ModCyclic.LOGGER.error("IO error", e);
       }
     }
     //LOAD player data

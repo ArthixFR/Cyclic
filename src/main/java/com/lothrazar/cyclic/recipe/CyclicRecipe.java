@@ -23,12 +23,18 @@
  ******************************************************************************/
 package com.lothrazar.cyclic.recipe;
 
+import com.google.gson.JsonObject;
 import com.lothrazar.cyclic.base.TileEntityBase;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.ITag.INamedTag;
+import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public abstract class CyclicRecipe implements IRecipe<TileEntityBase> {
 
@@ -65,5 +71,42 @@ public abstract class CyclicRecipe implements IRecipe<TileEntityBase> {
   @Override
   public IRecipeSerializer<?> getSerializer() {
     return null;
+  }
+
+  public static boolean matchFluid(FluidStack tileFluid, FluidTagIngredient ing) {
+    if (tileFluid == null || tileFluid.isEmpty()) {
+      return false;
+    }
+    if (ing.hasFluid() && tileFluid.getFluid() == ing.getFluidStack().getFluid()) {
+      return true;
+    }
+    //either recipe has no fluid or didnt match, try for tag
+    if (ing.hasTag()) {
+      //see /data/<id>/tags/fluids/  
+      for (INamedTag<Fluid> fluidTag : FluidTags.getAllTags()) {
+        if (ing.getTag().equalsIgnoreCase(fluidTag.getName().toString())) {
+          //this fluidTag is the one given in the recipe. now if its on the fluid ok
+          return tileFluid.getFluid().isIn(fluidTag);
+        }
+      }
+    }
+    return false;
+  }
+
+  public static FluidTagIngredient parseFluid(JsonObject json, String key) {
+    JsonObject mix = json.get(key).getAsJsonObject();
+    int count = mix.get("count").getAsInt();
+    if (count < 1) {
+      count = 1;
+    }
+    FluidStack fluidstack = FluidStack.EMPTY;
+    if (mix.has("fluid")) {
+      String fluidId = JSONUtils.getString(mix, "fluid");
+      ResourceLocation resourceLocation = new ResourceLocation(fluidId);
+      Fluid fluid = ForgeRegistries.FLUIDS.getValue(resourceLocation);
+      fluidstack = (fluid == null) ? FluidStack.EMPTY : new FluidStack(fluid, count);
+    }
+    String ftag = mix.has("tag") ? mix.get("tag").getAsString() : "";
+    return new FluidTagIngredient(fluidstack, ftag, count);
   }
 }

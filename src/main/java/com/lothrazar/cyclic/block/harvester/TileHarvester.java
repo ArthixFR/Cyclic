@@ -36,8 +36,6 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
@@ -51,7 +49,7 @@ public class TileHarvester extends TileEntityBase implements ITickableTileEntity
   }
 
   public static final Set<IHarvesterOverride> HARVEST_OVERRIDES = Sets.newIdentityHashSet();
-  public static final int MAX_SIZE = 12; // TODO: could be config . radius 7 translates to 15x15 area (center block + 7 each side)
+  public static final int MAX_SIZE = 12;
   static final int MAX_ENERGY = 640000;
   static final int MAX_HEIGHT = 16;
   public static IntValue POWERCONF;
@@ -63,7 +61,7 @@ public class TileHarvester extends TileEntityBase implements ITickableTileEntity
   private LazyOptional<IEnergyStorage> energyCap = LazyOptional.of(() -> energy);
 
   public TileHarvester() {
-    super(TileRegistry.harvesterTile);
+    super(TileRegistry.HARVESTER);
     timer = 1;
   }
 
@@ -125,7 +123,6 @@ public class TileHarvester extends TileEntityBase implements ITickableTileEntity
   }
 
   @Override
-  @OnlyIn(Dist.CLIENT)
   public AxisAlignedBB getRenderBoundingBox() {
     return TileEntity.INFINITE_EXTENT_AABB;
   }
@@ -213,7 +210,7 @@ public class TileHarvester extends TileEntityBase implements ITickableTileEntity
       //some silly old mods dont use age for compatibility
       // https://github.com/Resynth-Minecraft-Mod/Resynth-Mod/blob/a9f47439d103c1c17ca7a4ffd05c2dc0397e5e5f/src/main/java/com/ki11erwolf/resynth/plant/block/BlockBiochemicalPlant.java#L59
       //so we hack it
-      age = CompatConstants.CROPSTAGE_RESYNTH;
+      age = CompatConstants.RESYNTH_GROWTH_STAGE;
     }
     for (Property<?> p : blockState.getProperties()) {
       if (p != null && p.getName() != null
